@@ -10,7 +10,6 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/express": "^5.0.6",
-
     "@types/uuid": "^11.0.0"
   },
   "peerDependencies": {
@@ -19,9 +18,10 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
+    "@types/ws": "^8.18.1",
     "express": "^5.2.1",
     "google-protobuf": "^4.0.2",
-
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "ws": "^8.19.0"
   }
 }
