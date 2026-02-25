@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "SapheDeviceInfoDto.proto";
+import "PhoneInfoDto.proto";
+import "ClientAppInfoDto.proto";
+
+message UserDto {
+	string phoneId = 1 [deprecated=true]; // Generated per. app installation.
+	string phoneIdGuidString = 2 [deprecated=true]; // New representation of phone identifiers.
+	int64 userId = 3 [deprecated=true];
+	int64 debugId = 4 [deprecated=true]; // Id from users table, used for debugging
+	string appInstallationId = 5;
+	string simcardCountry = 6 [deprecated=true]; // Country for where the SIM card is registered
+	string ipAdress = 7 [deprecated=true]; // Ip adress of the user
+	string email = 8 [deprecated=true]; // email adress of the user
+	string password = 9 [deprecated=true]; // password of the user
+	string phoneNumber = 10 [deprecated=true];
+	string locale = 11 [deprecated=true]; // language locale of the user
+	int64 reportProviderId = 12 [deprecated=true]; //The unique number for reports in our new system
+	ClientAppInfoDto clientAppInfoDto = 13 [deprecated=true];
+	SapheDeviceInfoDto sapheDeviceInfoDto = 14 [deprecated=true];
+	PhoneInfoDto phoneInfoDto = 15 [deprecated=true];
+    string fullName = 17 [deprecated=true]; // name of the registered User
+}

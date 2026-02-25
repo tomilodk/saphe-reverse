@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+message DeviceModelDto {
+	int32 identifier		= 1;
+	int32 variant			= 2;
+	int32 designRevision	= 3;
+	int32 hardwareRevision	= 4;
+}

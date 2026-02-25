@@ -1,0 +1,27 @@
+{
+  "name": "saphe-reverse",
+  "module": "backend/server.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run backend/server.ts",
+    "dev": "trap 'kill 0' INT; bun --watch run backend/server.ts & cd frontend && bun run dev & wait"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/express": "^5.0.6",
+    "@types/leaflet": "^1.9.21",
+    "@types/uuid": "^11.0.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.0",
+    "express": "^5.2.1",
+    "google-protobuf": "^4.0.2",
+    "leaflet": "^1.9.4",
+    "uuid": "^13.0.0"
+  }
+}

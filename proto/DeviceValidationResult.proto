@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+// The result outcome of a Device validation attempt.
+enum DeviceValidationResult {
+	DeviceValidationResultValid									= 0;
+	DeviceValidationResultLockedOut								= 1;
+	DeviceValidationResultAppInstallationNotFound				= 2;
+	DeviceValidationResultDeviceNotActive						= 3; //The device is not activated.
+}

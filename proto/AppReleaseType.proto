@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+enum AppReleaseType {
+    AppReleaseTypeUnknown       = 0;
+    AppReleaseTypeProduction    = 1;
+    AppReleaseTypeBeta          = 2;
+    AppReleaseTypeAlpha         = 3;
+}

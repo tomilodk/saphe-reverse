@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+message VersionDto {
+	int32 major = 1; // Major version of the app 
+	int32 minor = 2; // Minor version of the app
+	int32 patch = 3; // Revision version of the app
+}

@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+option deprecated = true;
+enum PoiTypeDeprecated {
+	PoiTypeDeprecatedUnknown = 0;
+
+	PoiTypeDeprecatedFixedSpeedCamera = 1; // Camera which are placed in a fixed place and not moving
+	PoiTypeDeprecatedMobileSpeedCamera = 2; // Camera which is only temporary and might be moved after a while 
+	PoiTypeDeprecatedAverageSpeedCamera = 3; // Cameras which monitors a road section and calculates an average speed
+	PoiTypeDeprecatedRedLightCamera = 4; // Camera at red light which monitors if drive accross the redlight
+	PoiTypeDeprecatedSpeedAndRedLightCamera = 5; // Combination of a fixed speed camera and a red light camera
+	PoiTypeDeprecatedUnknownSpeedCameraCategory = 6; // Speed camera which type is unknown
+
+	PoiTypeDeprecatedCongestion = 7; // Traffic congestion
+
+	PoiTypeDeprecatedAccident = 8; // Accident that has occured on the road and might not have been cleaned up
+	PoiTypeDeprecatedCarOnShoulder = 9; // Car on the emergency lane 
+	PoiTypeDeprecatedObjectOnTheRoad = 10; // Object placed on the road which should be avoided
+	PoiTypeDeprecatedUnknownIncident = 11; // Unknown occurence which drivers should be aware of, such as potholes or road debris
+
+	PoiTypeDeprecatedRoadWork = 12; // Road work being done on the road
+	PoiTypeDeprecatedRoadWorkBlockedRoad = 13; // Road work which also blocks the road
+
+	PoiTypeDeprecatedWrongWayDriver = 14; // Driver driving in the wrong lane
+	
+	PoiTypeDeprecatedEmergencyVehicle = 15; // Emergency vehicle such as police car, ambulance or firetruck
+
+	PoiTypeDeprecatedTrain = 16; // Train approaching a level crossing (an intersection where a railway line crosses a road or path at the same level)
+
+	PoiTypeDeprecatedSchoolRoad = 17; // Roads where kids crosses the road to get into the school 
+	
+	PoiTypeDeprecatedAnimalsOnTheRoad = 18; //Animals are crossing the road, this can be a single animal or a herd		
+
+	PoiTypeDeprecatedHelicopterSpeedCamera = 19; //Helicopter Speed Camera POI type (similar as Animal POI with circle radius of 5km).	 
+
+	PoiTypeDeprecatedSpotCheck = 20; //Spot check POI alarm (similar to Danger/Unknown Incident POI).
+
+	PoiTypeDeprecatedDistanceControlCamera = 21; // Camera which measure the distance between vehicles 
+}

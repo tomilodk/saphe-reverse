@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "LocationDto.proto";
+
+message CircularPoiGeometryDto {
+    LocationDto center = 1;
+    float radius = 2; // Radius from the location which the POI covers in meters (0.0, ] 
+}

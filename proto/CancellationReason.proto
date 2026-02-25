@@ -1,0 +1,23 @@
+﻿syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+enum CancellationReason {
+	CancellationReasonUndefined										=  0;
+	CancellationReasonTooExpensive									=  1; // User finds the subscription too expensive
+	CancellationReasonNoLongerUses									=  2; // User no longer uses the subscription
+	CancellationReasonNoLongerWorks									=  3; // Product no longer works
+	CancellationReasonNoLongerOwnsCar								=  4; // User no longer owns a car
+	CancellationReasonDidNotMeetExpectations						=  5; // Subscription did not meet the user's expectations
+	CancellationReasonCreatedByMistake								=  6; // User created subscription by mistake
+	CancellationReasonOther											=  7; // None of the above cancellation reasons apply
+	CancellationReasonMovedOutOfCountry								=  8; // User has moved to another country
+	CancellationReasonNoLongerHasSaphe								=  9; // User no longer has a Saphe device
+	CancellationReasonCarWithSameFunctionality						= 10; // User has car with same functionality
+	CancellationReasonUsesOtherSaphe								= 11; // User uses another Saphe
+	CancellationReasonChangedToCompetitor							= 12; // User changed to a competitor
+	CancellationReasonDoesNotWantToSay								= 13; // User does not want to disclose the reason
+}

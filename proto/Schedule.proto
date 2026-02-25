@@ -1,0 +1,18 @@
+﻿syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "google/protobuf/duration.proto";
+
+message Schedule 
+{
+	string 							scheduleCron 		= 1; // Cron expression for the schedule (Local Time), fx "0 7 * * 1-5" Monday to Friday at 7:00
+	oneof scheduleEnd // Optional end of the schedule, either as a duration or a cron expression.
+	{
+		google.protobuf.Duration 	scheduleDuration 	= 2;
+		string 						scheduleEndCron 	= 3;	
+	}
+}

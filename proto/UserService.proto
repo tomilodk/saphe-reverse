@@ -1,0 +1,29 @@
+﻿// Please read the article below before implementing service:
+// https://saphe.atlassian.net/wiki/spaces/SAPREQ/pages/193462273/Using+gRPC
+
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Rpc";
+option java_package = "com.saphe.communication.grpc_stubs";
+
+service UserService {
+	// Links an existing user account to an external Identity provider
+	rpc LinkUserWithIdentityProvider(LinkUserWithIdentityProviderRequest) returns (LinkUserWithIdentityProviderResponse);
+}
+
+message LinkUserWithIdentityProviderRequest {
+	string idToken = 1; //Id token provided by the external identity provider
+}
+
+message LinkUserWithIdentityProviderResponse {
+	LinkUserWithIdentityProviderResult result = 1;
+}
+
+enum LinkUserWithIdentityProviderResult {
+	LinkUserWithIdentityProviderResultUndefined				= 0;
+	LinkUserWithIdentityProviderResultOk					= 1;
+	LinkUserWithIdentityProviderResultFailedIdTokenInvalid	= 2;
+	LinkUserWithIdentityProviderResultFailedAlreadyLinked	= 3;
+}

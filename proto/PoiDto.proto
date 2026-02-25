@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "google/protobuf/timestamp.proto"; 
+import "LineStringDto.proto";
+import "MultiLineStringDto.proto";
+import "PolygonDto.proto";
+import "PoiTypeDeprecated.proto";
+import "LocationDto.proto";
+import "LocationInfoDto.proto";
+
+option deprecated = true;
+message PoiDto {
+	int32 id = 1;
+
+	int32 version = 2; // Version of POI that indicates how many times it has been updated
+
+	google.protobuf.Timestamp update = 3; // Timestamp for when the POI was updated
+
+	PoiStatus poiStatus = 4; // Status of POI, such as Active, Suspended or Deleted
+
+	LocationInfoDto locationInfo = 5; // A LocationInfoDto defining where the POI is located. If it is a moving POI, it can contain speed, heading and accuracy
+	
+	repeated LocationDto geometry = 6 [deprecated=true]; // The geometry representation of the POI. In most cases it will just be a point, however, it could also be a linestring or polygon. This is deprecated, use new 'geom' type instead
+
+	string country = 7; // The country in which the POI is located
+
+	string roadName = 8;
+
+	oneof headingOneValue {
+		double headingOne = 9;
+	} 
+
+	oneof headingTwoValue {
+		double headingTwo = 10;
+	}
+
+	PoiTypeDeprecated poiTypeDeprecated = 11;
+	
+	oneof speedLimitValue {
+		int32 speedLimit = 12;
+	} 
+
+	oneof geom { // The geometry representation of the POI such as linestring, multilinestring or polygon.
+		LineStringDto lineStringDto = 13;
+		MultiLineStringDto multiLineStringDto = 14;
+		PolygonDto polygonDto = 15;
+	}
+
+	string city = 16;
+
+	enum PoiStatus {
+		Unknown = 0; // The POI status is unknown
+		Active = 1; // The POI is currently active
+		Deleted = 2; // The POI is no longer pressent
+		Suspended = 3; // The POI is about to be deleted, however, it can transist into the Active state if new reports arrive for that POI
+	}
+}

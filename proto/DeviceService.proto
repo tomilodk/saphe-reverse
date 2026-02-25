@@ -1,0 +1,63 @@
+﻿// Please read the article below before implementing service:
+// https://saphe.atlassian.net/wiki/spaces/SAPREQ/pages/193462273/Using+gRPC
+
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Rpc";
+
+import "DeviceDto.proto";
+import "DeviceValidationResult.proto";
+
+message ValidateDeviceRequestDto {
+	string       appInstallationUuid	= 1; // 16 byte UUID for the app installation
+    DeviceDto    device					= 2;
+    bytes        challenge				= 3; // 13 byte challenge from device. Optional.
+}
+
+message ValidateDeviceResponseDto {
+	DeviceValidationResult	result				= 1;
+	bytes					challengeResponse	= 2; // 64 byte challenge response for device in case of result = DeviceValidationResultValid and challenge provided. Otherwise empty.
+	repeated string			deviceAppFeatures	= 3; // Enumable amount of App features associated with the device. Empty if result != DeviceValidationResultValid
+}
+
+ // Used to activate a device.
+message ActivateDeviceRequestDto {
+	DeviceDto	device					= 1; //The device which should be activated
+	string		activationCodeId		= 2; //The activation code which should be used to activate
+}
+
+// Represents the result of a activate device call.
+message ActivateDeviceResponseDto {
+	ActivateDeviceResult	result		= 1;
+}
+
+// The result outcome of a Device activation attempt.
+enum ActivateDeviceResult{
+	ActivateDeviceResultUndefined						= 0; //State unknown
+	ActivateDeviceResultActivated						= 1; //Device has been activated
+	ActivateDeviceResultFailed							= 2; //Device could not be activated - unknown error
+	ActivateDeviceResultFailedAlreadyActivated			= 3; //Device is already activated and can't activated again
+	ActivateDeviceResultFailedInvalidDeviceModelVariant = 4; //Device Model or Variant not supported. I.e. Device country does not match the user's country or Model Id not supported
+	ActivateDeviceResultFailedActivationCodeExpired		= 5; //Activation code can't be used
+}
+
+// Service to handle Device validation and activation.
+service DeviceService {
+
+	// Validate device. A validated device can be used together with the app. Optionally a challenge from the device can be provided, 
+	// in which case the callengeResponse will be set.
+	// Optional: If available (User is logged in on the client) the saphe user access token is to be passed through the GRPC MetaData to do Bearer authentication 
+	// Error status codes:
+	// InvalidArgument:	One or more arguments are invalid.
+	// Internal:		More than one device was found or device could not be created. Should not be possible.
+	rpc ValidateDevice(ValidateDeviceRequestDto) returns (ValidateDeviceResponseDto);
+
+	// Activates a given device. The Device has to have been validated (Call ValidateDevice) at least once before activation.
+	// Required:  The saphe user access token is to be passed through the GRPC MetaData to do Bearer authentication 
+	// Error status codes:
+	// InvalidArgument: One or more arguments are invalid
+	// Internal:		The device was not found. Should not be possible.
+	rpc ActivateDevice(ActivateDeviceRequestDto) returns (ActivateDeviceResponseDto);
+}

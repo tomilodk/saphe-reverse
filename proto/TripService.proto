@@ -1,0 +1,272 @@
+// Please read the article below before implementing service:
+// https://saphe.atlassian.net/wiki/spaces/SAPREQ/pages/193462273/Using+gRPC
+
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication.grpc_stubs";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Rpc";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto"; 
+import "google/protobuf/duration.proto";
+import "ReportDto.proto";
+import "LocationDto.proto";
+import "google/protobuf/timestamp.proto";
+import "ReportOrigin.proto";
+import "PoiType.proto";
+import "PointPoiGeometryDto.proto";
+import "LineStringPoiGeometryDto.proto";
+import "MultiLineStringPoiGeometryDto.proto";
+import "PolygonalPoiGeometryDto.proto";
+import "CircularPoiGeometryDto.proto";
+import "LocationInfoDto.proto";
+import "DeviceDto.proto";
+import "AppService.proto";
+import "EncodedPolylinePoiGeometryDto.proto";
+
+service TripService {
+    rpc ReportPoi(ReportPoiRequestDto) returns (ReportPoiResponseDto);
+    rpc Update(stream TripUpdateRequestDto) returns (stream TripUpdateResponseDto);
+
+    // Retrieve all data within a specified tile.
+    // The client should discard all data retrieved from the request, if the request does not complete with a gRPC status code 'OK'.
+    // Note that GetTileResponseDto message consists of a 'oneof'. This will always be a TileMetaDataDto message as the first streamed element,
+    // while the rest of the streamed elements will be TileElementDto messages.
+    // Error status codes: 
+    // NotFound: Id of the requested tile does not exist.
+    rpc GetTile(GetTileRequestDto) returns (stream GetTileResponseDto);
+
+    // Propose change to a property related to the road network
+    rpc ReportMapChange(ReportMapChangeRequestDto) returns (ReportMapChangeResponseDto);
+}
+
+message ReportPoiRequestDto {
+    ReportDto report = 1;
+}
+
+message ReportPoiResponseDto { }
+
+message GetTileRequestDto {
+    string tileId = 1;
+}
+
+message GetTileResponseDto {
+    oneof response {
+        TileMetaDataDto tileMetaData = 1;
+        TileElementDto  tileElement  = 2;
+    }
+}
+
+message TileMetaDataDto {
+    TileVersionDto           tileVersion               = 1;
+
+    // Maximum duration for which no 'relevantTileVersion', which is contained in a 'TripUpdateResponseDto' message from the 'TripService.Update' gRPC,
+    // equal to the 'tileVersion' in this message has been received on the client before the tile data associated with the 'tileVersion' should be deleted on the client.
+    google.protobuf.Duration maxTileInactivityDuration = 2; 
+}
+
+message TileElementDto {
+    // Using 'oneof' to support different data types (e.g. POIs) in a tile.
+    oneof value {
+        WayDto way = 1;
+		StaticPoiDto staticPoi = 2;
+    }
+}
+
+message WayDto {
+    string                     wayId                            = 1;
+    string                     wayName                          = 2;
+    WayType                    wayType                          = 3 [deprecated = true];
+    google.protobuf.FloatValue speedLimitMeterPerSecond         = 4;  // Speed limit of the way. Range is (0.0, ). Unit is m/s.
+    bool                       isOneWay                         = 5;  // Indicates whether the way can only be used in one direction (from first to last element in linestring).
+    string                     encodedPolyline                  = 6;  // Encoded Google polyline with 5 digit precision https://developers.google.com/maps/documentation/utilities/polylinealgorithm
+    double                     lengthMeter                      = 7;  // Lenght of way in meter. Range is (0.0, ). Unit is meter.
+    BoundingBoxDto             boundingBox                      = 8;  // Bounding box that encompasses the way line string.
+    TrafficCapacityClass       trafficCapacityClass             = 9; 
+    bool                       isRoundabout                     = 10; 
+    bool                       isMotorway                       = 11;
+    bool                       isRamp                           = 12;
+    bool                       isTunnel                         = 13;
+    string                     routeNumber                      = 14;
+    int32                      startZLevel                      = 15; // Elevation of linestring at first point. Range is [int32.Min,int32.Max]. Unit is an index
+    int32                      endZLevel                        = 16; // Elevation of linestring at last point. Range is [int32.Min,int32.Max]. Unit is an index
+    google.protobuf.FloatValue advisorySpeedLimitMeterPerSecond = 17; // Optional advisory speed limit of the way. Range is (0.0, ). Unit is m/s.
+
+    enum WayType {
+        WayTypeUndefined     = 0;
+        WayTypeMotorway      = 1;
+        WayTypeMotorwayLink  = 2;
+        WayTypeTrunk         = 3;
+        WayTypeTrunkLink     = 4;
+        WayTypePrimary       = 5;
+        WayTypePrimaryLink   = 6;
+        WayTypeSecondary     = 7;
+        WayTypeSecondaryLink = 8;
+        WayTypeTertiary      = 9;
+        WayTypeTertiaryLink  = 10;
+        WayTypeUnclassified  = 11;
+        WayTypeResidential   = 12;
+    }
+
+    enum TrafficCapacityClass {
+        TrafficCapacityClassUndefined = 0;
+        TrafficCapacityClassHighest   = 1;
+        TrafficCapacityClassHigh      = 2;
+        TrafficCapacityClassMedium    = 3;
+        TrafficCapacityClassLow       = 4;
+        TrafficCapacityClassLowest    = 5;
+    }
+}
+
+message BoundingBoxDto {
+    LocationDto minLongitudeAndLatitude = 1; // Minimum longitude and latitude of the bounding box.
+    LocationDto maxLongitudeAndLatitude = 2; // Maximum longitude and latitude of the bounding box.
+}
+
+message ReportMapChangeRequestDto {
+    LocationDto                 location                            = 1; // Location at the time of report
+		int32                       locationAccuracyMeter               = 2 [deprecated = true]; // Accuracy of the location. Range is [0, ). Unit is meters.
+		google.protobuf.Timestamp   locationTimestamp                   = 3 [deprecated = true]; // Timestamp for when location was captured. Time standard is UTC.
+	 	float                       speedAtTimeOfReportMs               = 4 [deprecated = true]; // Speed at which the vehicle was moving. Range is [0.0, 139.0]. Unit is m/s.
+		int32                       reportHeadingDegrees        				= 5; // The direction of the report. Range is [0,360]. Unit is degrees.
+    google.protobuf.Timestamp   reportPostProcessingTimestamp       = 6 [deprecated = true]; // Timestamp for when report was post processed by the user. Time standard is UTC
+    google.protobuf.StringValue wayId                               = 7 [deprecated = true]; // Id of the way that the user was driving on at the time of report. Optional if no link id is available
+    ReportOrigin                reportOrigin                        = 8; // Information about the origin of the report
+    google.protobuf.StringValue comment                             = 10; // User comment. Optional
+
+    oneof mapChange {
+        ReportSpeedLimitChangeDto reportSpeedLimitChange      = 11;
+    }
+
+    string                      id                                  = 20; // GUID
+    google.protobuf.Timestamp   userCompletionExpirationTimestamp   = 21 [deprecated = true]; // The time when the user no longer can make changes to the report
+}
+
+message ReportMapChangeResponseDto { }
+
+message ReportSpeedLimitChangeDto {
+    float                              reportedSpeedLimitMs                = 1; // Range is [1.0,277.7]. Unit is m/s
+    SpeedLimitType                     reportedSpeedLimitType              = 2; 
+    google.protobuf.FloatValue         speedLimitDisplayedAtTimeOfReportMs = 3 [deprecated = true]; // Speed limit that was displayed to the user at the time of report. Optional if no speed limit was displayed. Range is [1.0,277.7]. Unit is m/s
+    bool                               isSpeedLimitZone                    = 4; // Indicates whether the speed limit report is part of a speed limit zone
+    SpeedLimitLifetimeClassification   speedLimitLifetimeClassification    = 5; // Indicates the classification of the speed limit in the area, for example roadworks
+
+    enum SpeedLimitType {
+        SpeedLimitTypeUndefined = 0;
+        SpeedLimitTypeLegal     = 1; // Speed limits that are enforced by law
+        SpeedLimitTypeAdvisory  = 2; // Speed limit recommendation used when it may be non-obvious to the driver that the safe speed is below the legal speed limit
+    }
+
+    enum SpeedLimitLifetimeClassification {
+        SpeedLimitLifetimeClassificationUndefined = 0;
+        SpeedLimitLifetimeClassificationPermanent = 1;
+        SpeedLimitLifetimeClassificationRoadworks = 2;
+    }
+}
+
+message TripUpdateRequestDto {
+  // ID 1 is reserved, as it has been used as tripUid in the past
+	LocationInfoDto 			locationInfo       = 2;						// Location data at the time of the update
+	string          			tripUuid		   = 3;						// UUID for the trip that is updated
+  // ID 4 is reserved, as it has been used as device in the past
+	repeated DeviceDto          devices			   = 5;						// The devices that the user is currently connected.
+	string                      roadSegmentId      = 6;
+	DriveType                   driveType          = 7;
+}
+
+enum DriveType {
+	DriveTypeUndefined	                = 0;
+	DriveTypeEmergencyVehicle		    = 1;
+	DriveTypeUnknown		            = 2;
+}
+
+message TripUpdateResponseDto {
+	oneof response { 
+		PoiUpdateDto			poiUpdate			= 1;
+		PoiUpdateChecksumDto	poiUpdateChecksum	= 2;
+		TileVersionDto			relevantTileVersion = 3;
+		TripConfigurationDto		tripConfigurationDto = 4;
+	}
+}
+
+message PoiUpdateDto {
+	uint32 id = 1 [deprecated=true]; // [1, 4294967295]
+	uint32 version = 2; // Version of POI that indicates how many times it has been updated [1, 4294967295]
+	PoiClientStateValue clientState = 3;
+	PoiTypeValue type = 4;
+	google.protobuf.Timestamp updateTimestamp = 5; // Timestamp for when the POI was generated
+	SpeedLimitValue speedLimit = 6;
+	google.protobuf.StringValue roadName = 7;
+	google.protobuf.StringValue city = 8;	
+	google.protobuf.StringValue countryCode = 9; // Two letter country code formatted according to ISO 3166-1 alpha-2 code
+	PoiGeometryValue geometry = 10;
+	PoiCongestionValue congestion = 11; // This is only set when POI is congestion and has line string geometry
+	PoiEmergencyVehicleValue emergencyVehicle = 12; // This is only set when POI is emergency vehicle
+	string newId = 13; // Guid for the poi. (will replace id in the future)
+	uint32 hash = 14; // Hash value of the Poi (used for checksum calculation)
+	bool isTest = 15; // Test pois are for internal usage only and should not be shown to users.
+}
+
+message PoiClientStateValue {
+  PoiClientState value = 1; // State of the POI from a client's perspective. This indicates how the client should present it to the user.
+}
+
+enum PoiClientState {
+	PoiClientStateUnknown = 0; // POI State has not been set
+	PoiClientStatePending = 1; // POI that is not active yet, however, it might become later on
+	PoiClientStateActive = 2; // POI is currently active
+	PoiClientStateDeleted = 3; // POI is deleted 
+	PoiClientStateOutOfRange = 4; // POI is active but far away from the client and therefore irrelevant
+}
+
+message PoiTypeValue {
+  PoiType value = 1;
+}
+
+message SpeedLimitValue {
+  google.protobuf.FloatValue value = 1; // Speed limit of the road where the POI is located. Range is (0.0, ). Unit is m/s.
+}
+
+message PoiGeometryValue {
+  oneof value {
+    PointPoiGeometryDto pointPoiGeometry = 1;
+    LineStringPoiGeometryDto lineStringPoiGeometry = 2;
+        MultiLineStringPoiGeometryDto multiLineStringPoiGeometry = 3 [deprecated = true];
+    PolygonalPoiGeometryDto polygonalPoiGeometry = 4;
+    CircularPoiGeometryDto circularPoiGeometry = 5;
+        EncodedPolylinePoiGeometryDto encodedPolylinePoiGeometry = 6;
+  }
+}
+
+message PoiCongestionValue {
+  float roadSegmentSpeedMs = 1;
+}
+
+message PoiEmergencyVehicleValue {
+	float speedMs = 1; // Speed of the emergency vehicle
+	google.protobuf.Timestamp gpsTimestamp = 2; // Timestamp for GPS location
+	int32 gpsAccuracy = 3; // Accuracy of the GPS location. Range is (0.0, ). Unit is metres.
+	bool allowLogging = 4; // Indicates whether logging of the emergency vehicle POI is allowed
+}
+
+// CRC-32C (Castagnoli) checksum value calculated for POIs that have not been removed (POIs in active or pending state). 
+// Calculation is based on POI id's and versions ordered by id ascending. Values are calculated in little-endian order.
+message PoiUpdateChecksumDto {
+	uint32 value    = 1;	// Value of checksum. Calculation is based on POI id's and versions ordered by id ascending. Values are calculated in little-endian order.
+    uint32 newValue = 2;  // Value of checksum. Calculation is based on POI checksum ordered by newId ascending. Values are calculated in little-endian order.
+}
+
+// TileVersionDto
+message TileVersionDto {
+	string   id       = 1;
+	uint32   version  = 2;
+}
+
+message StaticPoiDto {
+	string id                   = 1; // GUID
+	PoiType poiType             = 2;
+	PoiGeometryValue geometry   = 3;
+	bool isTest                 = 4; // Test pois are for internal usage only and should not be shown to users
+}

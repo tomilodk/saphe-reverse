@@ -1,0 +1,34 @@
+// Please read the article below before implementing service:
+// https://saphe.atlassian.net/wiki/spaces/SAPREQ/pages/193462273/Using+gRPC
+
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication.grpc_stubs";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Rpc";
+
+import "google/protobuf/timestamp.proto";
+import "UserLogDataChunkDto.proto";
+import "UploadStatusDto.proto";
+
+message AppAnalyticEvent {
+	string topicId 							 = 1;
+	map<string, string> topicData			 = 2;
+	google.protobuf.Timestamp eventTimestamp = 3;
+}
+message AppAnalyticsRequestDto {
+	repeated AppAnalyticEvent events = 1;
+}
+message AppAnalyticsResponseDto {
+	AppAnalyticsResult	result	= 1;
+}
+enum AppAnalyticsResult{
+	AppAnalyticsResultUndefined	= 0; 
+	AppAnalyticsResultOk		= 1; 
+}
+
+service LoggerService {
+	 rpc StoreLog(stream UserLogDataChunkDto) returns (UploadStatusDto);
+	 rpc LogAppAnalystics(AppAnalyticsRequestDto) returns (AppAnalyticsResponseDto);
+}

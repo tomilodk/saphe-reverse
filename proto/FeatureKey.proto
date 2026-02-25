@@ -1,0 +1,32 @@
+﻿syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+enum FeatureKey {
+	ParkingWidget						    = 0;
+	Navigation							    = 1;
+	CarIntegration						    = 2;
+	SpeedLimits							    = 3;
+	ReportPoiRoadsideEnabled 			    = 4;
+	DirectionalAlarmsSettingsEnabled	    = 5;
+	ReportSpeedLimitEnabled				    = 6 [deprecated = true];
+	VoiceAlarmEnabled					    = 7;
+	ReportMapChangeSpeedLimit			    = 8;
+	AverageSpeedZoneAssistant			    = 9;
+	RoadNetworkDetector					    = 10;
+	Roadworks							    = 11;
+	AnimalNearby						    = 12;
+	AdvisorySpeedLimits				        = 13;
+	LowPowerMode						    = 14;
+	EmergencyVehicle 					    = 15;
+	SlowMovingTraffic					    = 16;
+	DriveEmergencyVehicle                   = 17;
+	AppAnalyticsEmergencyVehicleDetection   = 18;
+	AppAnalyticsEmergencyVehicleDrive	    = 19 [deprecated = true];
+	AppAnalyticsSlowMovingTrafficDetection  = 20;
+	AppLogForcedAutoSubmission				= 21;
+	LogEmergencyVehicleDrive			    = 22;
+}

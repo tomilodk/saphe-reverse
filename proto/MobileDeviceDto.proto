@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "MobileDeviceModelDto.proto";
+import "MobileOsDto.proto";
+
+message MobileDeviceDto {
+	string					identifier		= 1; // Identifier for the mobile device. UIDevice.identifierForVendor on iOS and ANDROID_ID on Android.
+	string					displayName		= 2; // Display name for the mobile device. UIDevice.name on iOS and Bluetooth adapter name on Android.
+	MobileDeviceModelDto	model			= 3;
+	MobileOsDto				os				= 4;
+	string					language		= 5; // System language of the mobile device (ISO 639-1 (Alpha2) language Code)
+	string					country			= 6; // System country of the mobile device  (Alpha2 string)
+}

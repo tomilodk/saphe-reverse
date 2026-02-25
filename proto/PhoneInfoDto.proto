@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+message PhoneInfoDto {
+	string phoneModel = 1;
+	string phoneManufacturer = 2;
+	string osName = 3;
+	string osVersion = 4;
+}

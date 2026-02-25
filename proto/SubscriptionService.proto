@@ -1,0 +1,245 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication.grpc_stubs";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Rpc";
+
+import "google/protobuf/timestamp.proto";
+import "DeviceDto.proto";
+import "FeatureKey.proto";
+import "CancellationReason.proto";
+
+service SubscriptionService {
+	rpc CreateSubscription(CreateSubscriptionRequestDto) returns (CreateSubscriptionResponseDto);											// Create a new subscription
+	rpc ReactivateSubscription(ReactivateSubscriptionRequestDto) returns (ReactivateSubscriptionResponseDto);								// Reactivate a subscription.
+	rpc CancelSubscription(CancelSubscriptionRequestDto) returns (CancelSubscriptionResponseDto);											// Cancel a subscription.
+	rpc UncancelSubscription(UncancelSubsriptionRequestDto) returns (UncancelSubscriptionResponseDto);										// Uncancel a subscription.
+	rpc ChangePaymentMethod(ChangePaymentMethodRequestDto) returns (ChangePaymentMethodResponseDto);										// Change payment method for subscription
+	rpc ChangeSubscriptionPlan(ChangeSubscriptionPlanRequestDto) returns (ChangeSubscriptionPlanResponseDto);								// Change subscription plan (e.g, from monthly to yearly)
+	rpc GetOwnedSubscriptions(GetOwnedSubscriptionsRequestDto) returns (GetOwnedSubscriptionsResponseDto);									// Get list of users owned subscriptions
+	rpc GetAvailableSubscriptionOptions(GetAvailableSubscriptionOptionsRequestDto) returns (GetAvailableSubscriptionOptionsResponseDto);	// Get list of available subscription options for user
+	rpc GetSubscriptionFirstOfferUrl(GetSubscriptionFirstOfferUrlRequestDto) returns (GetSubscriptionFirstOfferUrlResponseDto);				// Get subscription first offer url (if available to the user)
+	rpc ValidateVoucher(ValidateVoucherRequest) returns (ValidateVoucherResponse);								// Validates a voucher code and, returns validation result and voucher information
+	rpc ConvertSubscription(ConvertSubscriptionRequestDto) returns (ConvertSubscriptionResponseDto);														
+}
+
+message GetSubscriptionFirstOfferUrlRequestDto {
+	DeviceDto						device							= 1; // Optional. Device potentially granting access to the offer
+	string 							returnUrl						= 2; // Universal / Deep link to return to App
+}
+
+message GetSubscriptionFirstOfferUrlResponseDto {
+	string 							forwardUrl						= 1; // Url to forward user to in order to complete the subscription offer operation. Is null if no offer is available.
+}
+
+message CreateSubscriptionRequestDto {
+	string 							sku								= 1;
+	string 							returnUrl						= 2; // Universal / Deep link to return to App
+	string							voucherCode						= 3; // Optional. Only used for new purchases. Voucher code used during checkout / creation of subscription.
+	string							subscriptionIdToConvert			= 4 [deprecated=true]; // Optional. Only used for new purchases. Subscription id to convert to new subscription
+}
+
+message CreateSubscriptionResponseDto {
+	string 							forwardUrl						= 1; // Url to forward user to in order to complete the operation
+	CreateSubscriptionResult		result							= 2;
+}
+
+message ReactivateSubscriptionRequestDto {
+	string 							subscriptionId					= 1;
+	string 							returnUrl						= 2; // Universal / Deep link to return to App
+}
+
+message ReactivateSubscriptionResponseDto {
+	string 							forwardUrl						= 1; // Url to forward user to in order to complete the operation
+}
+
+message CancelSubscriptionRequestDto {
+	string 							subscriptionId					= 1;
+	CancellationReason				reason							= 2;
+	string 							userComment						= 3; // Optional. Only used in case Reason = Other.
+	bool							cancelImmediately				= 4; // A TRUE value indicates that the subscription should be cancelled immediately, rather than at next renewal
+	string							phoneNumber						= 5; // Optional. User's phone number, including country code, e.g., '+45 12345678'
+}
+
+message CancelSubscriptionResponseDto {
+}
+
+message UncancelSubsriptionRequestDto {
+	string subscriptionId											= 1;
+}
+
+message UncancelSubscriptionResponseDto {
+}
+
+message ChangePaymentMethodRequestDto {
+	string subscriptionId											= 1;
+	string returnUrl												= 2; // Universal / Deep link to return to App
+}
+
+message ChangePaymentMethodResponseDto {
+	string forwardUrl												= 1; // Url to forward user to in order to complete the operation
+}
+
+message ChangeSubscriptionPlanRequestDto {
+	string subscriptionId											= 1;
+	string newSku													= 2; // Requested sku / sku that subscription should be changed to
+}
+
+message ChangeSubscriptionPlanResponseDto {
+
+}
+
+message GetOwnedSubscriptionsRequestDto {
+
+}
+
+message GetOwnedSubscriptionsResponseDto {
+	repeated SubscriptionOwnership 	subscriptions					= 1;
+}
+
+message SubscriptionOwnership
+{
+	 string											subscriptionId							= 1;
+	 string											sku										= 2;
+	 google.protobuf.Timestamp						signupDate								= 3;
+	 SubscriptionState								state									= 4;
+	 google.protobuf.Timestamp  					expirationDate							= 5;
+	 repeated FeatureKey							providedFeatureKeys						= 6;
+	 google.protobuf.Timestamp  					nextPaymentDueDate						= 7;
+	 bool 											isCancellable							= 8;  // Indicates whether the subscription can be cancelled. Aka. call 'CancelSubscription'
+	 bool 											isUncancellable							= 9;  // Indicates whether the subscription can be uncancelled. Aka. call 'UncancelSubscription'
+	 bool 											isPaymentMethodChangeable				= 10; // Indicates whether the payment method can be changed. Aka. call 'ChangePaymentMethod'
+	 bool                           				isRenewable								= 11; // Indicates whether the subscription can be renewed. Aka. call 'RenewSubscription'
+	 bool 											canVoucherCodeBeApplied					= 12; // Indicates whether vouchers can be applied to existing subscription. (Not currently in use).
+	 google.protobuf.Timestamp						paymentMethodExpirationDate				= 13;
+	 string 										paymentMethodIdentifier					= 14;
+	 string 										lastPaymentError						= 15;
+	 bool											isBusiness2BusinessPlan					= 16;
+	 repeated DeviceDto 							activatedDevices						= 17; // Some information (e.g, firmware version) might not be available
+	 string											paymentMethod                   		= 18; // Payment methos used (e.g., Visa, Mastercard, Mobilepay)
+	 float											price									= 19; // Current price of the subscription
+	 string											currency								= 20; // ISO-4217 code for the currency used to pay the subscription
+	 PaymentSchedule								paymentSchedule							= 21; // Current payment schedule for the subscription (monthly / annually)
+	 float											vatPercentage							= 22; // The VAT percentage for the subscription
+	 float											vat										= 23; // Amount of price that is VAT
+	 bool											isCancellableImmediately				= 24 [deprecated=true]; // Indicates whether the subscription can be cancelled immediately (rather than at next renewal)
+	 bool											isSkuChangeable							= 25; // Indicates whether the subscription can be changed to a different SKU
+	 string											subscriptionPlanName					= 26; // Name of the provided subscription plan (from Frisbii)
+	 int32											maximumActivatedDevices					= 27; // Maximum concurrent activated devices possible on the subscription
+	 SubscriptionTier								tier									= 28; // Subscription tier
+	 repeated SubscriptionConversionOpportunity		subscriptionConversionOpportunities		= 29; // Possible combinations of skus and days for subscription conversions
+	 bool											inBindingPeriod							= 30; // Indicates whether the subscription is in binding period 
+	 bool											canCancelAsSoonAsPossible				= 31; // Indicates whether the subscription can be cancelled as soon as possible
+	 bool											canCancelAtNextBilling					= 32; // Indicates whether the subscription can be cancelled at next billing date
+}
+
+message SubscriptionConversionOpportunity {
+	SubscriptionTier					tier					= 1 [deprecated=true];
+	PostponedBillingStartInformation	conversionInformation	= 2;					
+	string				subscriptionId = 3; // id for owned subscription that can be converted to 
+}
+
+message GetAvailableSubscriptionOptionsRequestDto {
+	string							voucherCode						= 1; // Optional. Only used for new purchases. Voucher code used during checkout / creation of subscription.
+	string							subscriptionIdToConvert			= 2 [deprecated=true]; // Optional. Only used for new purchases. Subscription id to convert to new subscription
+}
+
+message GetAvailableSubscriptionOptionsResponseDto {
+	repeated SubscriptionOption 			subscriptionOptions				= 1;
+        ValidateVoucherResult                                    validateVoucherResult                             = 2;
+}
+
+message SubscriptionOption
+{
+	string								sku									= 1;
+	float								price								= 2;
+	string								currency							= 3;
+	PaymentSchedule						paymentSchedule						= 4;
+	repeated string 					canActivateDeviceTypes				= 5;  // The device types for which activation keys are provided. The format of the individual strings are [model number]-[variant number]. E.g. "12-1"
+	repeated FeatureKey					providedFeatureKeys					= 6;  // A list of feature keys provided
+	repeated string 					changeOptionsSku					= 7;  // List of available SKUs subscription change
+	bool                        		canVoucherCodeBeApplied             = 8;  // Indicates whether vouchers can be applied when signing up for a subscription
+	float 								vatPercentage						= 9;  // The VAT percentage for the subscription e.g. 25.0
+	float								vat									= 10; // Amount of price that is vat
+	int32								minimumBindingPeriodMonth			= 11; // The minimum binding period in months
+	float								minimumPrice						= 12; // The minimum price in the binding period
+	bool								isBusiness2BusinessPlan				= 13; // Indicates if the subscription options is for a B2B subscription plan
+	string								subscriptionPlanName				= 14; // Name of the provided subscription plan (from Frisbii)
+	SubscriptionTier					tier								= 15; // Subscription tier
+	PostponedBillingStartInformation	voucherInformation					= 16; // Will be null if no voucher is provided or not valid
+	PostponedBillingStartInformation	conversionInformation				= 17; // Will be null if no subscription id for conversion are provided.
+	google.protobuf.Timestamp			firstPaymentDate					= 18; // Will contain date for first payment date (relative to current date - date of call)
+	google.protobuf.Timestamp			secondPaymentDate					= 19; // Will contain date for second payment date (relative to current date - date of call)
+}
+
+message ValidateVoucherRequest
+{
+	string voucherCode	= 1;
+}
+
+message ValidateVoucherResponse
+{
+	ValidateVoucherResult					result							= 1;
+	PostponedBillingStartInformation		voucherInformation				= 2; // Will be null if no voucher is provided or not valid
+}
+
+message PostponedBillingStartInformation
+{
+	int32				durationDays								= 1; // Voucher or conversion provided this amount of days excedding a full month of discount
+	int32				durationMonths								= 2; // Voucher or conversion provided this amount of months of discount
+}
+
+message ConvertSubscriptionRequestDto {
+	string 							fromId						= 1;
+	string 							toId						= 2; 
+}
+
+message ConvertSubscriptionResponseDto {
+ // http response should be fine for knowing success/error
+}	
+
+
+enum PaymentSchedule
+{
+	PaymentScheduleUndefined										= 0;
+	PaymentScheduleMonthly											= 1; // Every month
+	PaymentScheduleAnnually											= 2; // Every year
+	PaymentScheduleSemiAnnually										= 3; // Every 6 months
+}
+
+enum SubscriptionState{
+	SubscriptionStateUndefined     									= 0;
+	SubscriptionStateUnknown       									= 1;
+	SubscriptionStatePending       									= 2;
+	SubscriptionStateActive        									= 3;
+	SubscriptionStateCancelled     									= 4;
+	SubscriptionStateInGracePeriod 									= 5;
+	SubscriptionStateOnHold       									= 6;
+	SubscriptionStateExpired       									= 8;
+}
+
+enum CreateSubscriptionResult
+{
+	CreateSubscriptionResultUndefined								= 0; // Unknown result. Should not happen or be used
+	CreateSubscriptionResultOk										= 1; // Subscription created
+	CreateSubscriptionResultFailedVoucherCodeInvalid				= 2; // Could not create subscription. Voucher code was not valid
+	CreateSubscriptionResultFailedVoucherNotEligibleForUse			= 3; // Could not create subscription. Voucher was not eligible for use with subscription
+	CreateSubscriptionResultFailedVoucherIsAlreadyUsed				= 4; // Could not create subscription. Voucher was already used
+	CreateSubscriptionResultFailedVoucherRedemptionLimitReached 	= 5; // Could not create subscription. Voucher redemption limit reached
+}
+
+enum ValidateVoucherResult
+{
+	ValidateVoucherResultUndefined											= 0; // Unknown result status. Should not happen or be used
+	ValidateVoucherResultOk													= 1;
+	ValidateVoucherResultFailedVoucherCodeInvalid							= 2; // Voucher code is not valid
+	ValidateVoucherResultFailedVoucherRedemptionLimitReached 				= 3; // Voucher redemption limit reached
+}
+
+enum SubscriptionTier{
+	SubscriptionTierUndefined     									= 0; // Unknown tier. Should not happen or be used
+	SubscriptionTierPremium       									= 1;
+	SubscriptionTierPremiumPlus       								= 2;
+	SubscriptionTierBasic        									= 3;
+}

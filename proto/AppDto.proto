@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "MobileOsFamily.proto";
+import "AppVersionDto.proto";
+import "AppReleaseType.proto";
+
+message AppDto {
+	string			name			= 1;
+	MobileOsFamily	osFamily		= 2;
+	AppVersionDto	version			= 3;
+	AppReleaseType  releaseType		= 4;
+}

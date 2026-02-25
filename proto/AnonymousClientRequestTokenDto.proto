@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+message AnonymousClientRequestTokenDto {
+	bytes appChallengeResponse = 1; // Response of the challenge send by the server
+	string userIdGuidString = 2;  // Unique id for the user requesting the token
+
+	bytes peripheralChallenge = 3; // Challenge of the device. Only used when connecting to a peripheral requiring authentication from the server
+	string peripheralDeviceIdGuidString = 4; // Id of the peripheral used when requesting the server
+}

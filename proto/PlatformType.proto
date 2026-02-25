@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+enum PlatformType {
+	Android = 0;
+	Ios = 1;
+}

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "google/protobuf/timestamp.proto"; 
+import "EncryptedBytesDto.proto";
+import "UserDto.proto";
+
+message UserLogDataChunkDto {
+    EncryptedBytesDto payload = 1; // Data for the chunk
+    int64 chunkNumber = 2; // The sequence number of the chunk
+    int64 maxChunkNumber = 3; // The maximum number of chunks for this logfile
+    UserDto userDto = 4; // The user which send the chunk
+    google.protobuf.Timestamp logTimestamp = 5; // Timestamp for when the log was supposed to be sent
+}

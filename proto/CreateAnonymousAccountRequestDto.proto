@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+message CreateAnonymousAccountRequestDto {
+    bytes challengeResponse = 1; // Response of the challenge sent by the server
+	string phoneIdGuidString = 2; // New representation of phone identifiers.
+    string locale = 3; // language locale of the user
+}

@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "google/protobuf/wrappers.proto"; 
+import "LocationInfoDto.proto";
+import "ReportOrigin.proto";
+import "PoiType.proto";
+
+// The following rules apply for a Report to be valid:
+// All properties are required unless explicitly stated otherwise in the comments (or using a optional data type ex. FloatValue). If a property is only required in certain cases, follow the part of the rule about "value not being available" for the given data type.
+// All enums must be set to a value.
+// All primative number based properties (ex. integer, float etc.) must have a value. If a value is not available or unknown the property must be set to -1.
+// All string based properties must have a value. If a value is not available or unknown the property must be an empty string "".
+// All optional / nullable based properties (ex. FloatValue) must have a valid value. If a value is not available or unknown they should not be set (or set to null).
+message ReportDto {	
+	LocationInfoDto   locationInfo 					= 1; // Location data of the client at the time of the report.
+	ReportType 		  reportType   					= 2; 
+	PoiRoadSideValue  poiRoadSide  					= 3; // Side of road which the POI affects.
+	ReportAction      reportAction 					= 4;
+	string clientPositionWayId	   					= 5 [deprecated=true]; // id of the road on which the reporting client is currently on. Only required if available when creating the report
+	int32 poiId 				   					= 6 [deprecated=true]; // Use poiDetectionStateInfo instead
+	int32 poiVersion 			   					= 7 [deprecated=true]; // Is no longer used
+	int32 closestDistanceToPoiMeters				= 8 [deprecated=true]; // Use poiDetectionStateInfo instead
+	int32 confirmableDurationSeconds				= 9 [deprecated=true]; // Use poiDetectionStateInfo instead
+	string countryCode 								= 10 [deprecated=true]; // ISO 3166-1 alpha-2 code. Only required if available when creating the report
+	oneof reportTypeSpecificInfo
+	{
+		SlowMovingTrafficDto slowMovingTrafficInfo	= 11; // Required for ReportTypeSlowMovingTraffic reports otherwise null
+	}
+
+	ReportOrigin 	reportOrigin					= 12; // Information about the origin of the report
+	PoiDetectionStateInfo poiDetectionStateInfo		= 13; //Required if ReportAction is either confirm, reject or ignored - otherwise null.
+	ReportRoadInfoDto reportRoadInfo	 			= 14;
+
+	enum ReportType {
+		ReportTypeUndefined 		= 0;
+		ReportTypeMobileSpeedCamera = 1;
+		ReportTypeFixedSpeedCamera  = 2;
+		ReportTypeDanger 			= 3;
+		ReportTypeAccident 		    = 4;
+		ReportTypeCarOnShoulder 	= 5;
+		ReportTypeCongestion		= 6;
+		ReportTypeSlowMovingTraffic = 7;
+		ReportTypeAnimalNearby      = 8;
+	}
+
+	enum PoiRoadSide {
+		PoiRoadSideUndefined = 0;
+		PoiRoadSideRight 	 = 1;
+		PoiRoadSideLeft 	 = 2;
+		PoiRoadSideUnknown 	 = 3;
+	}
+	
+	enum ReportAction {
+		ReportActionUndefined = 0;
+		ReportActionNew 	  = 1;
+		ReportActionEdit 	  = 2;
+		ReportActionConfirm	  = 3;
+		ReportActionReject 	  = 4;
+		ReportActionIgnored   = 5;
+	}
+}
+
+message PoiRoadSideValue {
+	ReportDto.PoiRoadSide value = 1;
+}
+
+enum SlowMovingTrafficReportTrigger {
+	SlowMovingTrafficReportTriggerUndefined			= 0;
+	SlowMovingTrafficReportTriggerEnter				= 1;
+	SlowMovingTrafficReportTriggerIntervalExpired 	= 2;
+	SlowMovingTrafficReportTriggerExit				= 3;
+}
+
+message SlowMovingTrafficDto {
+	SlowMovingTrafficReportTrigger reportTrigger	= 1;
+	float speedLimitMS								= 2; //The speed limit reference that the slowMovingTraffic report is made for. Value is in meter/sec
+}
+
+message PoiDetectionStateInfo
+{
+	int32 poiId 				   					= 1 [deprecated=true]; //Use newPoiId instead.
+	PoiType poiType				   					= 2; // Type of the detected Poi
+	DetectionState detectionState					= 3;
+	int32 closestDistanceToPoiMeters				= 4; // the closest distance the client has been to the POI in meters.
+	int32 durationInStateSeconds					= 5; // the time the client has spent within the detection state. 
+	DetectionStrategy detectionStrategy				= 6; // the detector used to find the poi
+	string newPoiId								    = 7; // // Guid for the poi. (will replace poiId in the future)
+}
+
+enum DetectionState {
+	DetectionStateUndefined							= 0;
+	DetectionStateInformation						= 1;
+	DetectionStateAlarm							 	= 2;
+	DetectionStateConfirm							= 3;
+	DetectionStateIgnored							= 4;
+}
+
+enum DetectionStrategy {
+	DetectionStrategyUndefined 						= 0;
+	DetectionStrategyClassic						= 1;
+	DetectionStrategyRoadNetwork					= 2;
+}
+
+message ReportRoadInfoDto {
+	string 	countryCode		= 1; // ISO 3166-1 alpha-2 code. Only required if available when creating the report
+	string 	routeNumber		= 2;
+	string 	roadName		= 3;
+	string 	roadSegmentId	= 4;
+	bool	isMotorway		= 5;
+}

@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "LineStringDto.proto";
+
+message MultiLineStringDto {
+    repeated LineStringDto lineStringDtos = 1;
+}

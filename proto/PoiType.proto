@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+/*
+*   The first byte of each enum value indicates which category the type belongs to. 
+*   The second and third bytes are used as sub categories.
+*   Example: 'PoiTypeLawEnforcement' is a category. 'PoiTypeCamera' is a sub category of 'PoiTypeLawEnforcement'. 'PoiTypeMobileSpeedCamera' is a sub sub category of 'PoiTypeCamera'.
+*/ 
+enum PoiType {
+    PoiTypeUnknown                          = 0x000000;
+
+    PoiTypeLawEnforcement                   = 0x010000;
+    PoiTypeCamera                           = 0x010100;
+    PoiTypeMobileSpeedCamera                = 0x010101;
+    PoiTypeFixedSpeedCamera                 = 0x010102;
+    PoiTypeAverageSpeedCamera               = 0x010103;
+    PoiTypeRedLightCamera                   = 0x010104;
+    PoiTypeSpeedAndRedLightCamera           = 0x010105;
+    PoiTypeHelicopterSpeedCamera            = 0x010106;
+    PoiTypeDistanceControlCamera            = 0x010107;
+    PoiTypeSpotCheck                        = 0x010200;
+
+    PoiTypeDanger                           = 0x020000;
+    PoiTypeCarOnShoulder                    = 0x020100;
+    PoiTypeAccident                         = 0x020200;
+    PoiTypeAnimalNearby                     = 0x020300;
+    PoiTypeSchoolRoad                       = 0x020400;
+    PoiTypeEmergencyVehicle                 = 0x020500;
+
+    PoiTypeDelay                            = 0x030000;
+    PoiTypeCongestionDeprecated             = 0x030100 [deprecated=true];
+    PoiTypeCongestion                       = 0x030101;
+    PoiTypeRoadworksDeprecated              = 0x030200 [deprecated=true];
+    PoiTypeRoadworksBlockedDeprecated       = 0x030201 [deprecated=true];
+    PoiTypeRoadworks                        = 0x030202;
+}

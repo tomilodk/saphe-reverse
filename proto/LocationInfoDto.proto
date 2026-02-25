@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "LocationDto.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto"; 
+
+// The following rules apply for a LocationInfo to be valid:
+// All properties are required unless explicitly stated otherwise in the comments (or using a optional data type ex. FloatValue). If a property is only required in certain cases, follow the part of the rule about "value not being available" for the given data type.
+// All optional / nullable based properties (ex. FloatValue) must have a valid value. If a value is not available or unknown they should not be set (or set to null).
+message LocationInfoDto {
+	LocationDto location = 1;
+	oneof speedValue {
+		double speedDeprecated = 2 [deprecated=true];					// Speed at which the vehicle is moving. Unit is km/h.
+	}
+	oneof headingValue {
+		double headingDeprecated = 3 [deprecated=true];	 				// The direction in which the vehicle is moving. Range is (0.0,360.0]. Unit is degrees.
+	}
+	oneof locationAccuracyValue {
+		double locationAccuracyDeprecated = 4 [deprecated=true];	 	// Accuracy of the GPS location. Unit is metres.
+	}
+
+	google.protobuf.Timestamp timestamp = 5;		 					// Time standard is UTC.
+
+	google.protobuf.FloatValue speed = 6; 			 					// Unit is m/s.
+
+	google.protobuf.FloatValue heading = 7; 		 					// The direction in which the vehicle is moving. Range is [0.0,360.0]. Unit is degrees.
+
+	google.protobuf.FloatValue locationAccuracy = 8; 					// Accuracy of the GPS location. Range is (0.0, ). Unit is metres.
+}

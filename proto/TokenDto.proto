@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+message TokenDto {
+	string accessToken = 4; // The token used by the phone
+	string refreshToken = 5; // Used to request new token by a user who is logged user
+}

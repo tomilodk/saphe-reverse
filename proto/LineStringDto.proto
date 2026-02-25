@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "LocationDto.proto";
+
+message LineStringDto {
+    repeated LocationDto locations = 1; // Array of locations forming a line
+    string polyLine = 2; // Representation of the linestring as a polyline
+}

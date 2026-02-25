@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "DeviceDto.proto";
+
+message ReportOrigin
+{
+	ReportPlatform	reportPlatform					= 1;
+	DeviceDto	device								= 2; //Optional. But required if reportPlatform is a Device otherwise null.
+}
+
+enum ReportPlatform {
+	ReportPlatformUndefined		 					= 0;
+	ReportPlatformPhone	 							= 1;
+	ReportPlatformDevice		 					= 2;
+	ReportPlatformCarIntegration 					= 3;
+	ReportPlatformSystem		 					= 4;
+}

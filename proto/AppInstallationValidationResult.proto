@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+enum AppInstallationValidationResult {
+	//App is valid and can continue accessing APIs
+	AppInstallationValidationResultValid				= 0;
+	
+	//App is not supported. Install of supported App is needed
+	AppInstallationValidationResultAppNotSupported		= 1; 
+	
+	//Update is needed immediately.
+	AppInstallationValidationResultVersionNotSupported	= 2; 
+
+	//Update is needed as soon as possible
+	AppInstallationValidationResultVersionDeprecated	= 3; 
+}

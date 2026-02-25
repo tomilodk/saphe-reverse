@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "UserDto.proto";
+
+message CreateAnonymousAccountResponseDto {
+    bytes challenge = 1; // Challenge send by the server
+	UserDto userDto = 2; // UserDto for the newly generated anonymous user
+}

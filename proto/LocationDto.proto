@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+// Location represented in WGS 84  
+message LocationDto {
+	oneof latitudeValue { 
+		double lat = 1 [deprecated=true];
+	}
+	oneof longitudeValue {
+		double lng = 2 [deprecated=true];
+	}
+	double longitude = 3; // decimal degrees [-180.0, 180.0] 
+	double latitude = 4;  // decimal degrees [-90.0, 90.0]
+}

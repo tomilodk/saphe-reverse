@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "VersionDto.proto";
+
+message AppVersionDto {
+	VersionDto	semanticVersion = 1;
+	int32		build	= 2; // versionCode on Android, CFBundleVersion on iOS
+}

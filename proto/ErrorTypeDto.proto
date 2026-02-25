@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+message ErrorTypeDto {
+
+ErrorType errorCode = 1;
+
+enum ErrorType{
+	General = 0; // An unknown failure has occurred. 
+	DuplicateEmail = 1; // Email is already taken by another user.
+	PasswordMismatch = 2; // Incorrect password.
+	InvalidToken = 3; // Invalid Token.
+	UserAlreadyInRole = 4; // User already in role.
+	UserNotInRole = 5; // User is not in role.
+	ConcurrencyFailure = 6; // Concurrency failure, object has been modified.
+	PhoneNotRegistered = 7; // Phone is not registered in the system
+	TokenNotSent = 8; // Token is not sent for an endpoint that requires it;
+	TokenIsInvalid = 9; //Token is sent but its issuer; audience; time or signature is invalid
+	UserIsNotAuthorized = 10; // User does not have the needed role/claims to access this endpoint
+	UnknownClient = 11; // Client that is unknown to us is trying to connect to our API
+	PasswordTooShort = 12; // The password the user is trying to register with, is too short
+	NonExistingUser = 13; // User does not exist in the requisted context
+	EmailNotConfirmed = 14; // Email of the user is not confirmed 
+  }
+
+}
+

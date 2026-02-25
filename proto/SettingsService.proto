@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Rpc";
+option java_package = "com.saphe.communication.grpc_stubs";
+
+import "UserSettingsDto.proto";
+
+service SettingsService {
+	rpc GetUserSettings(GetUserSettingsRequestDto) returns (GetUserSettingsResponseDto);
+	rpc SaveUserSettings(SaveUserSettingsRequestDto) returns (SaveUserSettingsResponseDto);
+}
+
+message GetUserSettingsRequestDto {
+}
+
+message GetUserSettingsResponseDto {
+	UserSettingsDto		userSettings				= 1;
+}
+
+message SaveUserSettingsRequestDto {
+	UserSettingsDto		userSettings				= 1;
+}
+
+message SaveUserSettingsResponseDto {
+	SaveSettingsResult	result						= 1;
+}
+
+enum SaveSettingsResult {
+	SaveSettingsResultUndefined		= 0;
+	SaveSettingsResultOk			= 1;
+}

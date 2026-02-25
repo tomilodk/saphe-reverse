@@ -1,0 +1,99 @@
+﻿// Please read the article below before implementing service:
+// https://saphe.atlassian.net/wiki/spaces/SAPREQ/pages/193462273/Using+gRPC
+
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Rpc";
+option java_package = "com.saphe.communication.grpc_stubs";
+
+import "DeviceDto.proto";
+import "FeatureKey.proto";
+
+// Supported App based Sales Platform
+enum SalesPlatform{
+	SalesPlatformUndefined			= 0; //Sales platform has not been defined. Should not be used.
+	SalesPlatformGooglePlay			= 1; //Google Play
+	SalesPlatformAppleAppStore		= 2; //Apple App Store
+}
+
+// Register Purchase Request
+message RegisterPurchaseRequestDto {
+	string       	purchaseToken	= 1; // The token or receipt provided by the app store to identity the purchase
+    SalesPlatform	platform		= 2; // The sales platform store used to make the purchase
+    string        	sku				= 3; // Unique product identifier used by the app store.
+	string			orderId			= 4; // If purchase contains a Order Id this should be provided. Optional.
+}
+
+// The result outcome of a register payment
+enum RegisterPurchaseResult
+{
+	RegisterPurchaseResultUndefined								= 0; // Unknown result. Should not happen or be used
+	RegisterPurchaseResultOk									= 1; // Purchase registered and valid
+	RegisterPurchaseResultFailed								= 2; // Could not register purchase. Unknown error
+	RegisterPurchaseResultFailedCouldNotRegisterPurchaseToUser	= 3; // Could not register purchase to user
+}
+
+// Register Purchase Response
+message RegisterPurchaseResponseDto {
+	RegisterPurchaseResult	result	= 1;
+}
+
+message DeviceKey {
+	repeated string validForDeviceTypes	= 1;//the device types for which this device key can be used for activation. The format of the individual strings are [model number]-[variant number]. E.g. "12-1"
+	string activationCode				= 2;//the activation key to be used when activating a device
+	bool isFloatingKey					= 3;//is this key a floating key which can be used for automatic activation of devices
+	bool isKeyVacant					= 4;//is the key associated with a device activation
+	string displayName					= 5;//free text for displaying the name / type of device key (e.g. the name of subscription providing the device key)
+	string deviceSerialNumber			= 6;//the serial number of the device currently assosiated with the key. Is empty if no device is assosiated with the key
+}
+
+message ActivationKeysDto {
+	repeated DeviceKey deviceKeys		= 1;//a list of device keys avaliable for the user
+	repeated FeatureKey featureKeys		= 2;//a list of feature keys avaliable for the user
+}
+
+message FeatureInfoRequestDto {
+	DeviceDto device			= 1 [deprecated = true];	//Deprecated. Optional. If the optional Device is provided the keys returned are combined from the set of keys owned by the user and the set of keys connected to the device specified in the DeviceDto
+	repeated DeviceDto devices  = 2; 						//Optional. If the optional list of Devices is provided the keys returned are combined from the set of keys owned by the user and the set of keys connected to the devices specified in the DeviceDto list
+}
+
+message FeatureInfoResponseDto {
+	ActivationKeysDto activationKeys		= 1;
+	repeated string skusAvaliableForIap		= 2;//a list of SKUs avaliable for IAP for the given user (user from AccessToken)
+	bool hasActiveSubscription				= 3;//true if the user has a active subscription
+	bool isPurchasesAllowed					= 4;//true if user is allowed to make purchases
+	GoodsForSaleResponseDto goodsForSale	= 5;
+}
+
+message CanUserObtainDeviceKeyForDeviceRequestDto {
+	DeviceDto device	= 1;
+}
+
+message CanUserObtainDeviceKeyForDeviceResponseDto {
+	bool canObtainDeviceKey		= 1;//true is user can obtain device key for device otherwies false
+}
+
+message GoodsForSaleResponseDto {
+	repeated string canObtainDeviceKeyForDeviceTypes	= 1;//the device types for which the customer can buy an activation key. The format of the individual strings are [model number]-[variant number]. E.g. "12-1"
+	repeated FeatureKey featureKeysForSale				= 2;//a list of feature keys avaliable for the user to buy
+}
+
+//Provides Feature and payment related functionality for the app
+service FeatureService {
+	// Registers that the user has made a purchase on the App.
+	// Required:  The saphe user access token is to be passed through the GRPC MetaData to do Bearer authentication 
+	// Error status codes:
+	// InvalidArgument: One or more arguments are invalid. I.e. missing access token
+	// Internal:		Internal server error. I.e. User not found.
+	rpc RegisterPurchase(RegisterPurchaseRequestDto) returns (RegisterPurchaseResponseDto);
+
+	//Returns the feature related information avaliable for the Club Saphe user logged in (found as part of the AccessToken). 
+	//If the optional Device is provided in the request the keys returned are combined from the set of keys owned by the user and the set of keys connected to the device specified in the DeviceDto
+	rpc GetFeatureInfo(FeatureInfoRequestDto) returns (FeatureInfoResponseDto);
+
+	// Returns information about if it is possible for a user to obtain a device key for a certain device (via a purchase)
+	// Required:  The saphe user access token is to be passed through the GRPC MetaData to do Bearer authentication 
+	rpc CanUserObtainDeviceKeyForDevice(CanUserObtainDeviceKeyForDeviceRequestDto) returns (CanUserObtainDeviceKeyForDeviceResponseDto);
+}

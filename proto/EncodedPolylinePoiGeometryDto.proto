@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "google/protobuf/wrappers.proto"; 
+import "LocationDto.proto";
+
+message EncodedPolylinePoiGeometryDto {
+    string                     encodedPolyline = 1; // Encoded Google polyline with 5 digit precision (~1m) https://developers.google.com/maps/documentation/utilities/polylinealgorithm
+    google.protobuf.FloatValue firstHeading    = 2; // Heading of the first point in the linestring [0.0, 360.0) degrees
+    google.protobuf.FloatValue lastHeading     = 3; // Heading of the last point in the linestring [0.0, 360.0) degrees
+}

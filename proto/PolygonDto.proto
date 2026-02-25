@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "LocationDto.proto";
+
+message PolygonDto {
+    repeated LocationDto locations = 1; // Array of locations forming a polygon
+    string polyLine = 2; // Representation of the polygon as a polyline
+}

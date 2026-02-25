@@ -1,0 +1,14 @@
+﻿syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "CancellationReason.proto";
+
+message CancellationReasonConfiguration {
+	CancellationReason	cancellationReason		= 1;
+	bool				requirePhone			= 2;
+	bool				requireComment			= 3;
+}

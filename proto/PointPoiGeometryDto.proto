@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication_types.dto";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Dto";
+
+import "LocationDto.proto";
+
+message PointPoiGeometryDto {
+    LocationDto location = 1;
+    repeated float headings = 2; // [0.0, 360.0) degrees
+}

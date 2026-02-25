@@ -1,0 +1,42 @@
+// Please read the article below before implementing service:
+// https://saphe.atlassian.net/wiki/spaces/SAPREQ/pages/193462273/Using+gRPC
+
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication.grpc_stubs";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Rpc";
+
+import "google/protobuf/wrappers.proto"; 
+import "google/protobuf/timestamp.proto";
+
+message RegisterCarDiagnosticDataRequestDto {
+    string deviceIdentificationNumber       = 1; // Identification number of the saphe connect device ([model number]-[serial number])
+    string vin                              = 2; // [Optional=Empty String] The car VIN
+    google.protobuf.Timestamp readTime      = 3; // Time the obd values was read from the car
+    string obdProtocol                      = 4; // Underlying OBD-II signaling protocol used
+    repeated ObdReadDto obdReads            = 5;
+    DeviceReadDto deviceRead                = 6; // Values read from the device that is not part of the OBD protocol
+}
+
+message ObdReadDto {
+    string description          = 1; // [Optional=Empty String] Human readable description
+    int32 serviceId             = 2;
+    int32 parameterId           = 3;
+    repeated string values      = 4; // Hex values as strings of varying length, e.g. ["0x45", "0x10AC"]
+}
+
+message DeviceReadDto {
+    google.protobuf.Int32Value millivoltMin     = 1;
+    google.protobuf.Int32Value millivoltMax     = 2;
+    google.protobuf.Int32Value temperatureMin   = 3;
+    google.protobuf.Int32Value temperatureMax   = 4;
+}
+
+message RegisterCarDiagnosticDataResponseDto {
+}
+
+service CarDiagnosticService {
+    rpc RegisterCarDiagnosticData(RegisterCarDiagnosticDataRequestDto) returns (RegisterCarDiagnosticDataResponseDto);
+}

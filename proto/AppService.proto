@@ -1,0 +1,113 @@
+// Please read the article below before implementing service:
+// https://saphe.atlassian.net/wiki/spaces/SAPREQ/pages/193462273/Using+gRPC
+
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Rpc";
+
+import "AppDto.proto";
+import "MobileDeviceDto.proto";
+import "AppInstallationValidationResult.proto";
+import "LocationDto.proto";
+import "PoiType.proto";
+import "google/protobuf/timestamp.proto";
+import "Schedule.proto";
+import "CancellationReasonConfiguration.proto";
+import "CancellationReason.proto";
+
+service AppService {
+	rpc ValidateAppInstallation(ValidateAppInstallationRequestDto) returns (ValidateAppInstallationResponseDto);
+}
+
+message AppConfigurationDto {
+	AppAnalyticsConfigurationDto                appAnalyticsConfiguration               = 1;
+	FcdConfigurationDto                         floatingCarDataConfiguration            = 2;
+	TripConfigurationDto                        tripConfigurationDto                    = 3;
+	SlowMovingTrafficDetectionConfigurationDto  slowMovingTrafficDetectionConfiguration = 4;
+	ReportMapChangeConfigurationDto             reportMapChangeConfiguration            = 5 [deprecated = true];
+	EmergencyVehicleDetectionConfigurationDto   emergencyVehicleDetectionConfiguration  = 6;
+	StaticPoiConfigurationDto                   staticPoiConfigurationDto               = 8;
+	AlarmConfigurationDto                       alarmConfiguration		                = 9;
+	CancellationReasonConfigurationDto			cancellationReasonConfiguration			= 10;
+}
+
+message AppAnalyticsConfigurationDto {
+	bool			enabled														   = 1;
+	repeated string topicsDisabled 												   = 2;
+	TailbackWarningDetectionConfigurationDto tailbackWarningDetectionConfiguration = 3;
+}
+
+message TailbackWarningDetectionConfigurationDto {
+	int32 logIntervalDistanceMeter = 1; // The distance in meters between two logs of the tailback warning detection
+}
+
+message FcdConfigurationDto {
+	repeated FcdSurveyConfigurationDto surveys 	= 1; 
+}
+
+message FcdSurveyConfigurationDto {
+	string				 surveyId	= 1;
+	repeated LocationDto surveyPath = 2; 
+}
+
+message ValidateAppInstallationRequestDto {
+	string			appInstallationUuid	= 1; // UUID for the app installation
+	AppDto			app					= 2;
+	MobileDeviceDto mobileDevice		= 3;
+}
+
+message ValidateAppInstallationResponseDto {
+	AppInstallationValidationResult result			  = 1;
+	google.protobuf.Timestamp		versionExpiration = 2 [deprecated = true]; 
+	AppConfigurationDto				appConfiguration  = 3;
+}
+
+message TripConfigurationDto {
+	int32 tripUpdateIntervalSeconds = 1;
+}
+
+message SlowMovingTrafficDetectionConfigurationDto {
+	float minimumSpeedlimitMS								 = 1;//The minimum speedlimit that detection of slow moving traffic is done for
+	float standardSpeedWhenSpeedlimitIsUnlimitedMS			 = 2;//The speed to use as reference when the speedlimit is unlimited
+	int32 reportingIntervalSeconds							 = 3;//The interval with which slow-moving-traffic reports are to be sent when in slow moving traffic
+	float relativeSpeedForEnteringSlowMovingTraffic			 = 4;//The percentage of the roads speedlimit for speed to be deemed as slow moving. Value is between [0…1]
+	int32 minimumDurationForEnteringSlowMovingTrafficSeconds = 5;//The vehicle has to be below the relativeSpeedForEnteringSlowMovingTraffic threshold for at least this time to be deemed slow moving
+	float relativeSpeedForExitingSlowMovingTraffic			 = 6;//The percentage of the roads speedlimit for speed to be deemed as not slow moving. Value is between [0…1]
+	int32 minimumDurationForExitingSlowMovingTrafficSeconds	 = 7;//The vehicle has to be above the relativeSpeedForExitingSlowMovingTraffic threshold for at least this time to be deemed not slow moving
+}
+
+message ReportMapChangeConfigurationDto {
+	int32 reportMapChangeUserCompletionExpirationHours = 1 [deprecated = true];//The hours after the report is created that the user can no longer update the report
+}
+
+message EmergencyVehicleDetectionConfigurationDto {
+	int32 triggerDistanceSeconds 								= 1; // If the emergency vehicle will reach the user within triggerDistanceSeconds, it’s considered urgent enough to trigger a detection. This helps to filter out vehicles that are too far away in time to be relevant.
+	int32 triggerDistanceMeters 								= 2; // Even if the time-to-user is more than triggerDistanceSeconds, a detection is still created if the distance between the POI and user is under triggerDistanceMeters. This helps catch slow-moving (or small differences in velocity), but very close vehicles.
+	int32 convergenceDeltaSeconds 								= 3; // If both the user and the POI are expected to arrive at the same meeting point within convergenceDeltaSeconds of each other, the detector considers this a likelihood of encounter.
+	int32 loggingRadiusMeters            						= 4; // The radius around the user that will trigger EmergencyVehicleDetectionAppAnalyticsDto logs
+}
+
+message StaticPoiConfigurationDto {
+	int32 								maxStaticPoiDistanceMeters 			= 1; // The maximum distance in meters from the user that a static POI can be shown
+	SchoolRoadStaticPoiConfigurationDto schoolRoadStaticPoiConfigurationDto = 2;	
+}
+
+message SchoolRoadStaticPoiConfigurationDto {
+	Schedule schedule = 1;
+}
+
+message AlarmConfigurationDto {
+	CongestionAlarmConfigurationDto     congestionAlarmConfiguration = 1;    // Congestion alarm config
+}
+
+message CongestionAlarmConfigurationDto {
+    int32 cooldownDurationAfterLeavingCongestionSeconds = 1;    // The amount of time after *leaving a congestion* where congestion ALARM sounds are not played (cooldown)     
+    int32 cooldownDurationAfterCongestionAlarmSeconds = 2;      // The amount of time after *playing a congestion ALARM sound* where congestion ALARM sounds are not played (cooldown)
+}
+
+message CancellationReasonConfigurationDto {
+	repeated	CancellationReasonConfiguration		cancellationReasons = 1;
+}
+

@@ -1,0 +1,30 @@
+// Please read the article below before implementing service:
+// https://saphe.atlassian.net/wiki/spaces/SAPREQ/pages/193462273/Using+gRPC
+
+syntax = "proto3";
+
+package saphe.protobuf;
+
+option java_package = "com.saphe.communication.grpc_stubs";
+option csharp_namespace = "Saphe.Protobuf.Public.V1.Rpc";
+
+service MapService {
+    // List the directions used for car navigation.
+    // Error status codes: 
+    // InvalidArgument:     The query string defining the parameters for Google's HTTP 'directions' API is null or empty.
+    // Internal:            The request to Google's HTTP 'directions' API failed.
+    rpc ListDirections(ListDirectionsRequestDto) returns (ListDirectionsResponseDto) {
+        option deprecated = true;
+    };
+}
+
+message ListDirectionsRequestDto {
+    // Query string defining the parameters when calling Google's HTTP 'directions' api.
+    // Example: origin=57.045624,9.934464&destination=56.979527,9.638488&alternatives=true&sensor=false&mode=driving
+    string googleDirectionsHttpRequestQueryString = 1;
+}
+
+message ListDirectionsResponseDto {
+    // Response from Google's HTTP 'directions' api in JSON format.
+    string googleDirectionsHttpJsonResponse = 1;
+}
