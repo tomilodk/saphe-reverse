@@ -111,7 +111,9 @@ function extractLocation(geometry: any): {
 } {
   if (!geometry) return {};
 
-  const geo = geometry.value || geometry;
+  // geometry.value is the oneof discriminator string (e.g. "polygonalPoiGeometry"),
+  // not the actual data. Always use geometry directly.
+  const geo = typeof geometry.value === 'string' ? geometry : (geometry.value || geometry);
 
   if (geo.pointPoiGeometry?.location) {
     return {
