@@ -13,6 +13,7 @@ import {
   type PersistedAuth,
 } from "./auth";
 import { SapheGrpcClient, POI_TYPE_NAMES } from "./grpc-client";
+import { appendAccount, readAccounts, refreshAllAccounts, startRefreshCron } from "./accounts";
 
 const app = express();
 app.use(express.json());
@@ -225,6 +226,9 @@ app.get("/api/auth/auto-register-stream", async (_req, res) => {
     auth = { tokens, username: email, appInstallationId, obtainedAt: Date.now() };
     saveAuth(auth);
 
+    // Persist to accounts JSONL
+    appendAccount({ username: email, appInstallationId, tokens, obtainedAt: Date.now() });
+
     if (grpcClient) { grpcClient.close(); grpcClient = null; }
 
     send({ step: "Done! Logged in.", done: true, email });
@@ -304,12 +308,44 @@ app.get("/api/poi-types", (_req, res) => {
   res.json(POI_TYPE_NAMES);
 });
 
+// -- Accounts --
+app.get("/api/accounts", (_req, res) => {
+  const accounts = readAccounts();
+  res.json({
+    total: accounts.length,
+    alive: accounts.filter(a => !a.dead).length,
+    dead: accounts.filter(a => a.dead).length,
+    accounts: accounts.map(a => ({
+      username: a.username,
+      appInstallationId: a.appInstallationId,
+      obtainedAt: a.obtainedAt,
+      ageMin: Math.round((Date.now() - a.obtainedAt) / 60000),
+      dead: a.dead || false,
+      deadReason: a.deadReason,
+      deadAt: a.deadAt,
+    })),
+  });
+});
+
+app.post("/api/accounts/refresh", async (_req, res) => {
+  try {
+    const result = await refreshAllAccounts();
+    res.json({ ok: true, ...result });
+  } catch (err: any) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // ============ Start ============
 const PORT = process.env.PORT || 3456;
 
 bootstrap().then(() => {
+  startRefreshCron();
+
   app.listen(PORT, () => {
+    const accounts = readAccounts();
     console.log(`\nSaphe POI Explorer: http://localhost:${PORT}`);
-    console.log(`Auth status: ${auth ? 'logged in as ' + auth.username : 'not logged in'}\n`);
+    console.log(`Auth status: ${auth ? 'logged in as ' + auth.username : 'not logged in'}`);
+    console.log(`Accounts: ${accounts.filter(a => !a.dead).length} alive, ${accounts.filter(a => a.dead).length} dead\n`);
   });
 });
