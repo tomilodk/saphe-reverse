@@ -1,53 +1,71 @@
 import { WebSocketServer, WebSocket } from "ws";
 import type http from "http";
+import type { SessionManager } from "./session-manager";
 
 let wss: WebSocketServer | null = null;
+let mgr: SessionManager | null = null;
 
-export function createWSServer(server: http.Server): WebSocketServer {
+export function createWSServer(server: http.Server, sessionManager: SessionManager): WebSocketServer {
+  mgr = sessionManager;
   wss = new WebSocketServer({ server, path: "/ws/pois" });
 
-  wss.on("connection", (ws) => {
-    console.log("[WS] Client connected");
-    ws.on("close", () => console.log("[WS] Client disconnected"));
-    ws.on("error", (err) => console.error("[WS] Error:", err.message));
+  wss.on("connection", async (ws) => {
+    console.log("[WS] Client connected, creating session...");
+
+    const session = await mgr!.create(ws);
+    if (!session) {
+      ws.send(JSON.stringify({ type: "session:error", message: "No accounts available" }));
+      ws.close();
+      return;
+    }
+
+    ws.send(JSON.stringify({ type: "session:ready", sessionId: session.id }));
+    console.log(`[WS] Session ${session.id} ready (account: ${session.account.username})`);
+
+    ws.on("message", (raw) => {
+      try {
+        const msg = JSON.parse(raw.toString());
+
+        switch (msg.type) {
+          case "trip:start": {
+            const { lat, lng, speedKmh = 80, heading = 0 } = msg;
+            if (lat == null || lng == null) {
+              session.sendMessage({ type: "backend_error", source: "trip", message: "lat and lng required", timestamp: Date.now() });
+              return;
+            }
+            session.startTrip(lat, lng, speedKmh, heading);
+            session.sendMessage({ type: "trip:started", tripUuid: session.tripUuid });
+            break;
+          }
+          case "trip:move": {
+            const { lat, lng, speedKmh, heading } = msg;
+            session.moveTrip(lat, lng, speedKmh, heading);
+            break;
+          }
+          case "trip:stop": {
+            session.stopTrip();
+            session.sendMessage({ type: "trip:stopped" });
+            break;
+          }
+          default:
+            console.log(`[WS] Unknown message type: ${msg.type}`);
+        }
+      } catch (err: any) {
+        console.error(`[WS] Message parse error: ${err.message}`);
+      }
+    });
+
+    ws.on("close", () => {
+      console.log(`[WS] Session ${session.id} disconnected`);
+      mgr!.destroy(session.id);
+    });
+
+    ws.on("error", (err) => {
+      console.error(`[WS] Session ${session.id} error: ${err.message}`);
+    });
   });
 
   return wss;
-}
-
-export function broadcastPoi(poi: any): void {
-  if (!wss) return;
-  const message = JSON.stringify({ type: "poi_update", poi, timestamp: Date.now() });
-  for (const client of wss.clients) {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
-  }
-}
-
-export function broadcastPoiBatch(pois: any[]): void {
-  if (!wss) return;
-  const message = JSON.stringify({ type: "poi_batch", pois, timestamp: Date.now() });
-  for (const client of wss.clients) {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
-  }
-}
-
-export function broadcastError(source: string, message: string): void {
-  if (!wss) return;
-  const payload = JSON.stringify({
-    type: "backend_error",
-    source,
-    message,
-    timestamp: Date.now(),
-  });
-  for (const client of wss.clients) {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(payload);
-    }
-  }
 }
 
 export function getConnectedClients(): number {

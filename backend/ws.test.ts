@@ -1,14 +1,52 @@
-import { describe, expect, test, beforeAll, afterAll } from "bun:test";
+import { describe, expect, test, beforeAll, afterAll, mock } from "bun:test";
 import { WebSocket } from "ws";
-import { createWSServer, broadcastPoi, broadcastPoiBatch, getConnectedClients } from "./ws";
+import { createWSServer, getConnectedClients } from "./ws";
+import { SessionManager } from "./session-manager";
+import type { Account } from "./accounts";
 import http from "http";
 
 let server: http.Server;
 let port: number;
 
+function makeAccount(username: string): Account {
+  return {
+    username,
+    appInstallationId: `app-${username}`,
+    tokens: {
+      id_token: "id",
+      access_token: `access-${username}`,
+      refresh_token: `refresh-${username}`,
+      expires_in: 3600,
+      token_type: "Bearer",
+      scope: "openid",
+    },
+    obtainedAt: Date.now(),
+  };
+}
+
+const accounts = [makeAccount("a@test.com"), makeAccount("b@test.com")];
+
+const sessionManager = new SessionManager({
+  readAccounts: () => accounts,
+  createGrpcClient: () => ({
+    startTrip: mock(() => {}),
+    sendLocationUpdate: mock(() => {}),
+    stopTrip: mock(() => {}),
+    close: mock(() => {}),
+    getTile: mock(async () => ({ metadata: null, ways: [], staticPois: [] })),
+    dynamicPois: new Map(),
+    staticPois: new Map(),
+    onPoiUpdate: undefined,
+    onStaticPoi: undefined,
+    onTileVersion: undefined,
+    onConfig: undefined,
+    onError: undefined,
+  } as any),
+});
+
 beforeAll(async () => {
   server = http.createServer();
-  createWSServer(server);
+  createWSServer(server, sessionManager);
   await new Promise<void>((resolve) => {
     server.listen(0, () => {
       port = (server.address() as any).port;
@@ -21,93 +59,69 @@ afterAll(() => {
   server.close();
 });
 
-function connectClient(): Promise<WebSocket> {
+function connectClient(): Promise<{ ws: WebSocket; messages: any[] }> {
   return new Promise((resolve) => {
     const ws = new WebSocket(`ws://localhost:${port}/ws/pois`);
-    ws.on("open", () => resolve(ws));
+    const messages: any[] = [];
+    ws.on("message", (data) => messages.push(JSON.parse(data.toString())));
+    ws.on("open", () => resolve({ ws, messages }));
   });
 }
 
-describe("WebSocket POI broadcast", () => {
-  test("client receives POI updates", async () => {
-    const ws = await connectClient();
-    const messages: any[] = [];
-
-    ws.on("message", (data) => {
-      messages.push(JSON.parse(data.toString()));
-    });
-
-    broadcastPoi({
-      id: "test-1",
-      type: "Fixed Speed Camera",
-      typeCode: 1,
-      state: "Active",
-      latitude: 56.17,
-      longitude: 9.55,
-      speedLimitKmh: 80,
-      roadName: "Silkeborgvej",
-      city: "Silkeborg",
-    });
-
+describe("WebSocket per-session protocol", () => {
+  test("client receives session:ready on connect", async () => {
+    const { ws, messages } = await connectClient();
     await new Promise((r) => setTimeout(r, 100));
-    ws.close();
 
-    expect(messages.length).toBe(1);
-    expect(messages[0].type).toBe("poi_update");
-    expect(messages[0].poi.id).toBe("test-1");
-    expect(messages[0].timestamp).toBeNumber();
+    expect(messages.length).toBeGreaterThanOrEqual(1);
+    expect(messages[0].type).toBe("session:ready");
+    expect(messages[0].sessionId).toBeString();
+
+    ws.close();
+    await new Promise((r) => setTimeout(r, 100));
   });
 
-  test("multiple clients receive broadcast", async () => {
-    const ws1 = await connectClient();
-    const ws2 = await connectClient();
-    const msgs1: any[] = [];
-    const msgs2: any[] = [];
-
-    ws1.on("message", (data) => msgs1.push(JSON.parse(data.toString())));
-    ws2.on("message", (data) => msgs2.push(JSON.parse(data.toString())));
-
-    broadcastPoi({ id: "test-2", type: "Mobile Speed Camera", state: "Active" });
-
+  test("trip:start returns trip:started", async () => {
+    const { ws, messages } = await connectClient();
     await new Promise((r) => setTimeout(r, 100));
-    ws1.close();
-    ws2.close();
 
-    expect(msgs1.length).toBe(1);
-    expect(msgs2.length).toBe(1);
-    expect(msgs1[0].poi.id).toBe("test-2");
-    expect(msgs2[0].poi.id).toBe("test-2");
+    ws.send(JSON.stringify({ type: "trip:start", lat: 55.67, lng: 12.56, speedKmh: 80 }));
+    await new Promise((r) => setTimeout(r, 100));
+
+    const started = messages.find((m) => m.type === "trip:started");
+    expect(started).toBeDefined();
+    expect(started.tripUuid).toBeString();
+
+    ws.close();
+    await new Promise((r) => setTimeout(r, 100));
   });
 
-  test("batch broadcast sends all POIs", async () => {
-    const ws = await connectClient();
-    const messages: any[] = [];
-
-    ws.on("message", (data) => messages.push(JSON.parse(data.toString())));
-
-    broadcastPoiBatch([
-      { id: "batch-1", type: "Camera", state: "Active" },
-      { id: "batch-2", type: "Spot Check", state: "Active" },
-    ]);
-
+  test("two clients get separate sessions", async () => {
+    const c1 = await connectClient();
+    const c2 = await connectClient();
     await new Promise((r) => setTimeout(r, 100));
-    ws.close();
 
-    expect(messages.length).toBe(1);
-    expect(messages[0].type).toBe("poi_batch");
-    expect(messages[0].pois.length).toBe(2);
+    const s1 = c1.messages.find((m) => m.type === "session:ready");
+    const s2 = c2.messages.find((m) => m.type === "session:ready");
+
+    expect(s1).toBeDefined();
+    expect(s2).toBeDefined();
+    expect(s1.sessionId).not.toBe(s2.sessionId);
+
+    c1.ws.close();
+    c2.ws.close();
+    await new Promise((r) => setTimeout(r, 100));
   });
 
   test("getConnectedClients returns correct count", async () => {
-    const ws1 = await connectClient();
-    const ws2 = await connectClient();
+    const c1 = await connectClient();
+    const c2 = await connectClient();
+    await new Promise((r) => setTimeout(r, 100));
 
-    // Give a moment for the server to register connections
-    await new Promise((r) => setTimeout(r, 50));
     expect(getConnectedClients()).toBeGreaterThanOrEqual(2);
 
-    ws1.close();
-    ws2.close();
+    c1.ws.close();
+    c2.ws.close();
     await new Promise((r) => setTimeout(r, 100));
   });
 });
