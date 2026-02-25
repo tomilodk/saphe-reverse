@@ -15,7 +15,7 @@ import {
 import { SapheGrpcClient, POI_TYPE_NAMES } from "./grpc-client";
 import { appendAccount, readAccounts, refreshAllAccounts, startRefreshCron } from "./accounts";
 import http from "http";
-import { createWSServer, broadcastPoi, getConnectedClients } from "./ws";
+import { createWSServer, broadcastPoi, broadcastError, getConnectedClients } from "./ws";
 
 const app = express();
 app.use(express.json());
@@ -83,10 +83,12 @@ function ensureClient(): SapheGrpcClient {
       console.log(`[Tile] ${tile.id} v${tile.version}`);
       grpcClient!.getTile(tile.id).catch((err) => {
         console.error(`[Tile Error] ${tile.id}:`, err.message);
+        broadcastError("tile", err.message);
       });
     };
     grpcClient.onError = (err) => {
       console.error("[gRPC Error]", err.message);
+      broadcastError("grpc", err.message);
     };
   }
   return grpcClient;
@@ -280,6 +282,7 @@ app.post("/api/trip/start", async (req, res) => {
 
     res.json({ ok: true, tripUuid });
   } catch (err: any) {
+    broadcastError("trip", err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });

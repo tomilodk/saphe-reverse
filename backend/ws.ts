@@ -35,6 +35,21 @@ export function broadcastPoiBatch(pois: any[]): void {
   }
 }
 
+export function broadcastError(source: string, message: string): void {
+  if (!wss) return;
+  const payload = JSON.stringify({
+    type: "backend_error",
+    source,
+    message,
+    timestamp: Date.now(),
+  });
+  for (const client of wss.clients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(payload);
+    }
+  }
+}
+
 export function getConnectedClients(): number {
   return wss?.clients.size || 0;
 }
