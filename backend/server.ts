@@ -14,6 +14,8 @@ import {
 } from "./auth";
 import { SapheGrpcClient, POI_TYPE_NAMES } from "./grpc-client";
 import { appendAccount, readAccounts, refreshAllAccounts, startRefreshCron } from "./accounts";
+import http from "http";
+import { createWSServer, broadcastPoi, getConnectedClients } from "./ws";
 
 const app = express();
 app.use(express.json());
@@ -75,6 +77,7 @@ function ensureClient(): SapheGrpcClient {
     grpcClient = new SapheGrpcClient(auth.tokens.access_token, auth.appInstallationId);
     grpcClient.onPoiUpdate = (poi) => {
       console.log(`[POI] ${poi.state} ${poi.type} at ${poi.latitude?.toFixed(5)}, ${poi.longitude?.toFixed(5)}`);
+      broadcastPoi(poi);
     };
     grpcClient.onTileVersion = (tile) => {
       console.log(`[Tile] ${tile.id} v${tile.version}`);
@@ -110,6 +113,7 @@ app.get("/api/auth/status", (_req, res) => {
     appInstallationId: auth?.appInstallationId || null,
     tokenAgeMin: auth ? Math.round((Date.now() - auth.obtainedAt) / 60000) : null,
     tokenExpiresIn: auth ? auth.tokens.expires_in : null,
+    wsClients: getConnectedClients(),
   });
 });
 
@@ -339,12 +343,16 @@ app.post("/api/accounts/refresh", async (_req, res) => {
 // ============ Start ============
 const PORT = process.env.PORT || 3456;
 
+const httpServer = http.createServer(app);
+createWSServer(httpServer);
+
 bootstrap().then(() => {
   startRefreshCron();
 
-  app.listen(PORT, () => {
+  httpServer.listen(PORT, () => {
     const accounts = readAccounts();
     console.log(`\nSaphe POI Explorer: http://localhost:${PORT}`);
+    console.log(`WebSocket: ws://localhost:${PORT}/ws/pois`);
     console.log(`Auth status: ${auth ? 'logged in as ' + auth.username : 'not logged in'}`);
     console.log(`Accounts: ${accounts.filter(a => !a.dead).length} alive, ${accounts.filter(a => a.dead).length} dead\n`);
   });
