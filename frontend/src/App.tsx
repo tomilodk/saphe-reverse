@@ -42,9 +42,10 @@ function App() {
     api.getPoiTypes().then(types => {
       setPoiTypes(types);
       const f: Record<number, boolean> = {};
-      for (const code of Object.keys(types)) {
+      for (const [code, name] of Object.entries(types)) {
         const c = Number(code);
-        if (c !== 0) f[c] = true;
+        if (c === 0) continue;
+        f[c] = (name as string).includes('Camera') || name === 'Law Enforcement';
       }
       setFilters(f);
     }).catch(() => {});
