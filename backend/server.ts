@@ -71,6 +71,28 @@ async function bootstrap() {
 }
 
 // ---- Helpers ----
+// Sequential tile fetch queue to avoid overwhelming the gateway
+const tileQueue: string[] = [];
+let tileProcessing = false;
+
+async function processTileQueue() {
+  if (tileProcessing || tileQueue.length === 0 || !grpcClient) return;
+  tileProcessing = true;
+
+  while (tileQueue.length > 0) {
+    const tileId = tileQueue.shift()!;
+    try {
+      await grpcClient.getTile(tileId);
+    } catch (err: any) {
+      console.warn(`[Tile] ${tileId} failed: ${err.message}`);
+    }
+    // Small delay between tile fetches
+    await new Promise((r) => setTimeout(r, 200));
+  }
+
+  tileProcessing = false;
+}
+
 function ensureClient(): SapheGrpcClient {
   if (!auth) throw new Error("Not authenticated");
   if (!grpcClient) {
@@ -80,11 +102,11 @@ function ensureClient(): SapheGrpcClient {
       broadcastPoi(poi);
     };
     grpcClient.onTileVersion = (tile) => {
-      console.log(`[Tile] ${tile.id} v${tile.version}`);
-      grpcClient!.getTile(tile.id).catch((err) => {
-        console.error(`[Tile Error] ${tile.id}:`, err.message);
-        broadcastError("tile", err.message);
-      });
+      // Queue tile fetches to avoid HTTP/2 stream limit
+      if (!tileQueue.includes(tile.id)) {
+        tileQueue.push(tile.id);
+      }
+      processTileQueue();
     };
     grpcClient.onError = (err) => {
       console.error("[gRPC Error]", err.message);
