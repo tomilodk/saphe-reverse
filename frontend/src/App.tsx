@@ -21,7 +21,7 @@ function App() {
   const [poiTypes, setPoiTypes] = useState<Record<string, string>>({});
   const [filters, setFilters] = useState<Record<number, boolean>>({});
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([55.605, 13.004]);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([56.1694, 9.5518]);
   const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -132,7 +132,7 @@ function App() {
   return (
     <div className="app-layout">
       <div className="map-area">
-        <MapContainer center={[55.605, 13.004]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={true}>
+        <MapContainer center={[56.1694, 9.5518]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={true}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -18,7 +18,12 @@ export default function AutoRegisterModal({ onClose, onSuccess, addLog }: Props)
   const [finished, setFinished] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
 
+  const startedRef = useRef(false);
+
   useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+
     const es = new EventSource('/api/auth/auto-register-stream');
 
     es.onmessage = (e) => {

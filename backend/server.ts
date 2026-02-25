@@ -32,8 +32,8 @@ let auth: PersistedAuth | null = null;
 let grpcClient: SapheGrpcClient | null = null;
 let tripInterval: ReturnType<typeof setInterval> | null = null;
 let tripUuid: string | null = null;
-let currentLat = 55.605;
-let currentLng = 13.0038;
+let currentLat = 56.1694;
+let currentLng = 9.5518;
 let currentSpeed = 22.2;
 let currentHeading = 0;
 
