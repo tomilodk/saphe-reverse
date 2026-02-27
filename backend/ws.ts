@@ -22,6 +22,16 @@ export function createWSServer(server: http.Server, sessionManager: SessionManag
     ws.send(JSON.stringify({ type: "session:ready", sessionId: session.id }));
     console.log(`[WS] Session ${session.id} ready (account: ${session.account.username})`);
 
+    // Error-reporting health check: confirm the error pipeline is alive every 2 min
+    const healthInterval = setInterval(() => {
+      session.sendMessage({
+        type: "backend_error",
+        source: "health-check",
+        message: "Errors can be reported successfully",
+        timestamp: Date.now(),
+      });
+    }, 2 * 60 * 1000);
+
     ws.on("message", (raw) => {
       try {
         const msg = JSON.parse(raw.toString());
@@ -56,6 +66,7 @@ export function createWSServer(server: http.Server, sessionManager: SessionManag
     });
 
     ws.on("close", () => {
+      clearInterval(healthInterval);
       console.log(`[WS] Session ${session.id} disconnected`);
       mgr!.destroy(session.id);
     });
