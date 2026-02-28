@@ -6,7 +6,7 @@ import type { TokenResponse } from "./auth";
 
 const GATEWAY_HOST = "gateway.saphe.com";
 const GATEWAY_PORT = 13377;
-const PROTO_DIR = path.join(import.meta.dir, "..", "proto");
+const PROTO_DIR = path.join(import.meta.dirname, "..", "proto");
 
 // POI type hex codes to human-readable names
 export const POI_TYPE_NAMES: Record<number, string> = {

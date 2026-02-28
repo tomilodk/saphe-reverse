@@ -7,7 +7,7 @@ const CLIENT_ID = "android";
 const SCOPE =
   "openid profile email app_gateway app_features activation_codes offline_access";
 
-const TOKEN_FILE = path.join(import.meta.dir, "..", ".tokens.json");
+const TOKEN_FILE = path.join(import.meta.dirname, "..", ".tokens.json");
 
 export interface TokenResponse {
   id_token: string;

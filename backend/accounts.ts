@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { refreshAccessToken, type TokenResponse } from "./auth";
 
-const ACCOUNTS_FILE = path.join(import.meta.dir, "..", ".accounts.jsonl");
+const ACCOUNTS_FILE = path.join(import.meta.dirname, "..", ".accounts.jsonl");
 
 export interface Account {
   username: string;

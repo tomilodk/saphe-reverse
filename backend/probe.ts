@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const GATEWAY_HOST = "gateway.saphe.com";
 const GATEWAY_PORT = 13377;
-const PROTO_DIR = path.join(import.meta.dir, "..", "proto");
+const PROTO_DIR = path.join(import.meta.dirname, "..", "proto");
 
 function loadProto() {
   const packageDef = protoLoader.loadSync(

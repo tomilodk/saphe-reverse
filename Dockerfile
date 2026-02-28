@@ -1,14 +1,14 @@
-FROM oven/bun:1 AS base
+FROM node:20-alpine AS base
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl
 
-COPY package.json bun.lock ./
-RUN bun install --production
+COPY package.json package-lock.json* ./
+RUN npm install --omit=dev
 
 COPY backend/ ./backend/
 COPY proto/ ./proto/
 COPY index.ts ./
 
 EXPOSE 3456
-CMD ["bun", "run", "backend/server.ts"]
+CMD ["npx", "tsx", "backend/server.ts"]
