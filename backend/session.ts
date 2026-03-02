@@ -34,6 +34,7 @@ export class Session {
     };
 
     this.grpcClient.onTileVersion = (tile: { id: string; version: number }) => {
+      console.log(`[Session ${this.id}] Tile version received: id=${tile.id} version=${tile.version} queued=${this.tileQueue.includes(tile.id)}`);
       if (!this.tileQueue.includes(tile.id)) {
         this.tileQueue.push(tile.id);
       }
@@ -103,6 +104,12 @@ export class Session {
       const tileId = this.tileQueue.shift()!;
       try {
         const result = await this.grpcClient.getTile(tileId);
+        const cameras = result.staticPois.filter(p => p.type.includes("Camera"));
+        const fixedCameras = result.staticPois.filter(p => p.type.includes("Fixed"));
+        console.log(`[Session ${this.id}] Tile ${tileId}: ${result.staticPois.length} static POIs, ${cameras.length} cameras (${fixedCameras.length} fixed)`);
+        if (fixedCameras.length > 0) {
+          console.log(`[Session ${this.id}] Fixed cameras in tile ${tileId}:`, fixedCameras.map(c => `${c.type} at ${c.latitude?.toFixed(5)},${c.longitude?.toFixed(5)}`));
+        }
         if (result.staticPois.length > 0) {
           this.sendMessage({ type: "poi_batch", pois: result.staticPois, timestamp: Date.now() });
         }
