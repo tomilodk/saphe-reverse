@@ -386,7 +386,6 @@ export class SapheGrpcClient {
             ways.push(elem.way);
           } else if (elem.value === "staticPoi" && elem.staticPoi) {
             const poi = parseStaticPoi(elem.staticPoi);
-            console.log(`[gRPC getTile] Static POI: id=${poi.id} type=${poi.type} (0x${poi.typeCode.toString(16)}) at ${poi.latitude?.toFixed(5)}, ${poi.longitude?.toFixed(5)} isTest=${poi.isTest}`);
             pois.push(poi);
             this.staticPois.set(poi.id, poi);
             this.onStaticPoi?.(poi);
@@ -396,8 +395,6 @@ export class SapheGrpcClient {
 
       stream.on("error", (err: any) => reject(err));
       stream.on("end", () => {
-        const cameraCount = pois.filter(p => p.type.includes("Camera")).length;
-        console.log(`[gRPC getTile] Tile ${tileId} complete: ${pois.length} static POIs, ${ways.length} ways, ${cameraCount} cameras`);
         resolve({ metadata: tileMeta, ways, staticPois: pois });
       });
     });
