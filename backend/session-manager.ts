@@ -23,17 +23,17 @@ export class SessionManager {
     });
   }
 
-  async create(ws: WebSocket): Promise<Session | null> {
+  async create(ws: WebSocket, lat?: number, lng?: number): Promise<Session | null> {
     let account: Account | null;
 
     if (this.opts.autoRegister) {
       try {
-        account = await this.pool.checkoutOrRegister();
+        account = await this.pool.checkoutOrRegister(lat, lng);
       } catch {
         return null;
       }
     } else {
-      account = this.pool.checkout();
+      account = this.pool.checkout(lat, lng);
     }
 
     if (!account) return null;

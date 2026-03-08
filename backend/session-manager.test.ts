@@ -86,4 +86,30 @@ describe("SessionManager", () => {
     const session = await mgr.create(ws as any);
     expect(session).toBeNull();
   });
+
+  test("create passes location to pool checkout", async () => {
+    const accts = [makeAccount("a@test.com")];
+    // Give account a far-away location to force it to be out of range
+    (accts[0] as any).lastLat = 60.0;
+    (accts[0] as any).lastLng = 12.0;
+    (accts[0] as any).lastLocationAt = Date.now();
+
+    const mgr = new SessionManager({
+      readAccounts: () => accts,
+      autoRegister: async () => makeAccount("new@test.com"),
+      createGrpcClient: () => ({
+        startTrip: mock(() => {}),
+        sendLocationUpdate: mock(() => {}),
+        stopTrip: mock(() => {}),
+        close: mock(() => {}),
+        dynamicPois: new Map(),
+        staticPois: new Map(),
+      } as any),
+    });
+
+    const ws = mockWs();
+    const session = await mgr.create(ws as any, 55.67, 12.56);
+    expect(session).not.toBeNull();
+    expect(session!.account.username).toBe("new@test.com");
+  });
 });
