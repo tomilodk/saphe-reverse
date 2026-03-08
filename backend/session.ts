@@ -1,5 +1,6 @@
 import type { WebSocket } from "ws";
 import type { Account } from "./accounts";
+import { updateAccountLocation } from "./accounts";
 import type { SapheGrpcClient, PoiData, StaticPoiData } from "./grpc-client";
 
 const UPDATE_INTERVAL_MS = 60000;
@@ -10,6 +11,7 @@ export class Session {
   public account: Account;
   public grpcClient: SapheGrpcClient;
   public tripUuid: string | null = null;
+  public sentPois: Map<string, PoiData> = new Map();
 
   private tripInterval: ReturnType<typeof setInterval> | null = null;
   private lat = 0;
@@ -29,6 +31,11 @@ export class Session {
 
     // Wire POI callbacks to this session's WS only
     this.grpcClient.onPoiUpdate = (poi: PoiData) => {
+      if (poi.state === "Deleted") {
+        this.sentPois.delete(poi.id);
+      } else {
+        this.sentPois.set(poi.id, poi);
+      }
       this.sendMessage({ type: "poi_update", poi, timestamp: Date.now() });
     };
 
@@ -54,6 +61,7 @@ export class Session {
     this.heading = headingDeg;
     this.tripUuid = crypto.randomUUID();
 
+    updateAccountLocation(this.account.username, lat, lng);
     this.grpcClient.startTrip(this.lat, this.lng, this.speed, this.heading);
 
     this.tripInterval = setInterval(() => {
@@ -71,6 +79,7 @@ export class Session {
     if (speedKmh != null) this.speed = speedKmh / 3.6;
     if (headingDeg != null) this.heading = headingDeg;
 
+    updateAccountLocation(this.account.username, lat, lng);
     this.grpcClient.sendLocationUpdate(this.tripUuid, this.lat, this.lng, this.speed, this.heading);
   }
 
@@ -86,6 +95,34 @@ export class Session {
   cleanup(): void {
     this.stopTrip();
     this.grpcClient.close();
+  }
+
+  handlePoisSync(clientPois: Array<{ id: string; hash: number }>): {
+    added: PoiData[];
+    removed: string[];
+    updated: PoiData[];
+  } {
+    const clientMap = new Map(clientPois.map((p) => [p.id, p.hash]));
+    const added: PoiData[] = [];
+    const updated: PoiData[] = [];
+    const removed: string[] = [];
+
+    for (const [id, poi] of this.sentPois) {
+      const clientHash = clientMap.get(id);
+      if (clientHash == null) {
+        added.push(poi);
+      } else if (clientHash !== poi.hash) {
+        updated.push(poi);
+      }
+    }
+
+    for (const [id] of clientMap) {
+      if (!this.sentPois.has(id)) {
+        removed.push(id);
+      }
+    }
+
+    return { added, removed, updated };
   }
 
   sendMessage(msg: any): void {
@@ -104,6 +141,18 @@ export class Session {
         const result = await this.grpcClient.getTile(tileId);
         if (result.staticPois.length > 0) {
           this.sendMessage({ type: "poi_batch", pois: result.staticPois, timestamp: Date.now() });
+          for (const sp of result.staticPois) {
+            this.sentPois.set(sp.id, {
+              ...sp,
+              state: "Active",
+              version: 0,
+              hash: 0,
+              speedLimitKmh: undefined,
+              roadName: undefined,
+              city: undefined,
+              countryCode: undefined,
+            });
+          }
         }
       } catch (err: any) {
         console.warn(`[Session ${this.id}] Tile ${tileId} failed: ${err.message}`);
