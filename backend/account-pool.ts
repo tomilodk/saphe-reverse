@@ -1,4 +1,7 @@
 import type { Account } from "./accounts";
+import { haversineDistance } from "./geo";
+
+const MAX_DISTANCE_M = 75_000; // 75km
 
 interface AccountPoolOptions {
   readAccounts: () => Account[];
@@ -13,19 +16,55 @@ export class AccountPool {
     this.opts = opts;
   }
 
-  checkout(): Account | null {
+  checkout(lat?: number, lng?: number): Account | null {
     const accounts = this.opts.readAccounts();
-    for (const acct of accounts) {
-      if (!acct.dead && !this.checkedOut.has(acct.username)) {
-        this.checkedOut.add(acct.username);
-        return acct;
+    const available = accounts.filter(
+      (a) => !a.dead && !this.checkedOut.has(a.username)
+    );
+
+    if (available.length === 0) return null;
+
+    // No location provided — return first available (backward compat)
+    if (lat == null || lng == null) {
+      this.checkedOut.add(available[0].username);
+      return available[0];
+    }
+
+    // Separate accounts with and without location data
+    const withLocation: Array<{ account: Account; distance: number }> = [];
+    const withoutLocation: Account[] = [];
+
+    for (const acct of available) {
+      if (acct.lastLat != null && acct.lastLng != null) {
+        const distance = haversineDistance(lat, lng, acct.lastLat, acct.lastLng);
+        if (distance <= MAX_DISTANCE_M) {
+          withLocation.push({ account: acct, distance });
+        }
+      } else {
+        withoutLocation.push(acct);
       }
     }
+
+    // Prefer closest account within 75km
+    if (withLocation.length > 0) {
+      withLocation.sort((a, b) => a.distance - b.distance);
+      const best = withLocation[0].account;
+      this.checkedOut.add(best.username);
+      return best;
+    }
+
+    // Fall back to accounts without location data
+    if (withoutLocation.length > 0) {
+      this.checkedOut.add(withoutLocation[0].username);
+      return withoutLocation[0];
+    }
+
+    // All accounts are too far
     return null;
   }
 
-  async checkoutOrRegister(): Promise<Account> {
-    const existing = this.checkout();
+  async checkoutOrRegister(lat?: number, lng?: number): Promise<Account> {
+    const existing = this.checkout(lat, lng);
     if (existing) return existing;
 
     if (!this.opts.autoRegister) {
