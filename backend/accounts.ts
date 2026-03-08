@@ -12,6 +12,9 @@ export interface Account {
   dead?: boolean;
   deadReason?: string;
   deadAt?: number;
+  lastLat?: number;
+  lastLng?: number;
+  lastLocationAt?: number;
 }
 
 export function readAccounts(): Account[] {
@@ -35,6 +38,17 @@ export function appendAccount(account: Account): void {
 
 export function getAliveAccounts(): Account[] {
   return readAccounts().filter((a) => !a.dead);
+}
+
+export function updateAccountLocation(username: string, lat: number, lng: number): void {
+  const accounts = readAccounts();
+  const account = accounts.find((a) => a.username === username);
+  if (!account) return;
+
+  account.lastLat = lat;
+  account.lastLng = lng;
+  account.lastLocationAt = Date.now();
+  writeAccounts(accounts);
 }
 
 export async function refreshAllAccounts(): Promise<{
