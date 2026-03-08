@@ -9,10 +9,14 @@ export function createWSServer(server: http.Server, sessionManager: SessionManag
   mgr = sessionManager;
   wss = new WebSocketServer({ server, path: "/ws/pois" });
 
-  wss.on("connection", async (ws) => {
+  wss.on("connection", async (ws, req) => {
     console.log("[WS] Client connected, creating session...");
 
-    const session = await mgr!.create(ws);
+    const url = new URL(req.url || "", "http://localhost");
+    const lat = url.searchParams.has("lat") ? parseFloat(url.searchParams.get("lat")!) : undefined;
+    const lng = url.searchParams.has("lng") ? parseFloat(url.searchParams.get("lng")!) : undefined;
+
+    const session = await mgr!.create(ws, lat, lng);
     if (!session) {
       ws.send(JSON.stringify({ type: "session:error", message: "No accounts available" }));
       ws.close();
@@ -55,6 +59,22 @@ export function createWSServer(server: http.Server, sessionManager: SessionManag
           case "trip:stop": {
             session.stopTrip();
             session.sendMessage({ type: "trip:stopped" });
+            break;
+          }
+          case "pois:sync": {
+            const clientPois = msg.pois || [];
+            const result = session.handlePoisSync(clientPois);
+            session.sendMessage({
+              type: "pois:sync_result",
+              added: result.added,
+              removed: result.removed,
+              updated: result.updated,
+              timestamp: Date.now(),
+            });
+            break;
+          }
+          case "ping": {
+            session.sendMessage({ type: "pong" });
             break;
           }
           default:
